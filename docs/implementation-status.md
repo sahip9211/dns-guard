@@ -1,10 +1,15 @@
 # Implementation status
 
 DNS Guard is a DNS filtering prototype with UDP/TCP forwarding. It does not yet
-provide desktop/web administration, persistent analytics or a background
-updater.
+provide mutable web administration, a desktop shell, persistent analytics or a
+background updater. A read-only browser dashboard is implemented.
 
 ## Implemented
+
+- Optional embedded dashboard and versioned aggregate status API, using Hyper,
+  Serde and a separate bounded runtime thread. Independent management tokens use
+  native credential libraries or explicit private credential files. See
+  [management API](management-api.md) for the exact security and resource scope.
 
 Private policy index encryption and installed per-instance service
 identities are still unfinished. Encryption currently covers configuration and
@@ -25,7 +30,7 @@ its rollback journal; see [security scope](security-model.md).
 
 - Bounded UDP/TCP DNS service with client CIDR allowlists, category filtering,
   CNAME target checks, upstream reply correlation, deadlines and TCP fallback.
-- One-thread CLI runtime with explicit upstream configuration, signal shutdown
+- One-thread DNS runtime (optional management adds a separate thread) with explicit upstream configuration, signal shutdown
   and aggregate counters; no query names are logged.
 
 - Strict hostname validation and normalization; explicit category masks.

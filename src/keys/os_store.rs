@@ -5,17 +5,18 @@ use crate::{Error, Result};
 use keyring_core::{Entry, Error as StoreError};
 use zeroize::Zeroizing;
 
+#[cfg(test)]
 const SERVICE: &str = "dns-guard.instance-key.v1";
 
-pub(super) fn create() -> Result<String> {
+pub(super) fn create(service: &str) -> Result<String> {
     let mut id = [0; 16];
     getrandom::fill(&mut id).map_err(|_| Error::new("OS identifier generation failed"))?;
     let id = hex::encode(id);
-    save_new(&native_entry(&id)?)?;
+    save_new(&native_entry(service, &id)?)?;
     Ok(id)
 }
 
-pub(super) fn read(id: &str) -> Result<DataKey> {
+pub(super) fn read(service: &str, id: &str) -> Result<DataKey> {
     if id.len() != 32
         || !id
             .bytes()
@@ -25,10 +26,10 @@ pub(super) fn read(id: &str) -> Result<DataKey> {
             "keyring identifier must be 32 lowercase hexadecimal characters",
         ));
     }
-    read_entry(&native_entry(id)?)
+    read_entry(&native_entry(service, id)?)
 }
 
-fn native_entry(id: &str) -> Result<Entry> {
+fn native_entry(service: &str, id: &str) -> Result<Entry> {
     #[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
     use keyring_core::api::CredentialStoreApi;
     #[cfg(target_os = "linux")]
@@ -40,16 +41,16 @@ fn native_entry(id: &str) -> Result<Entry> {
     #[cfg(target_os = "windows")]
     return store
         .build(
-            SERVICE,
+            service,
             id,
             Some(&std::collections::HashMap::from([("persistence", "Local")])),
         )
         .map_err(store_error);
     #[cfg(any(target_os = "linux", target_os = "macos"))]
-    return store.build(SERVICE, id, None).map_err(store_error);
+    return store.build(service, id, None).map_err(store_error);
     #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
     {
-        let _ = id;
+        let _ = (service, id);
         Err(Error::new(
             "no OS credential store backend for this platform",
         ))

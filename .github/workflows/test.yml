@@ -45,6 +45,13 @@ jobs:
         if: always() && runner.os == 'macOS'
         run: security delete-keychain "$RUNNER_TEMP/dns-guard-ci.keychain-db"
       - run: cargo +stable check --no-default-features --locked
+      - name: Headless browser dashboard
+        if: runner.os == 'Linux'
+        timeout-minutes: 6
+        run: |
+          npm ci --prefix tests/web --ignore-scripts
+          npx --prefix tests/web playwright install --with-deps chromium
+          npm test --prefix tests/web
       - run: cargo +stable build --release --locked
   python:
     runs-on: ubuntu-latest

@@ -23,7 +23,7 @@ impl DataKey {
     pub fn create_in_keyring() -> Result<String> {
         #[cfg(feature = "os-keyring")]
         {
-            os_store::create()
+            os_store::create("dns-guard.instance-key.v1")
         }
         #[cfg(not(feature = "os-keyring"))]
         {
@@ -37,7 +37,7 @@ impl DataKey {
     pub fn read_keyring(id: &str) -> Result<Self> {
         #[cfg(feature = "os-keyring")]
         {
-            os_store::read(id)
+            os_store::read("dns-guard.instance-key.v1", id)
         }
         #[cfg(not(feature = "os-keyring"))]
         {
@@ -102,6 +102,66 @@ impl DataKey {
         text
     }
 }
+/// Independent, randomly generated read-only management credential. Never use a
+/// database key as a bearer token. The native store has a separate namespace.
+pub struct ManagementToken(DataKey);
+
+impl std::fmt::Debug for ManagementToken {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("ManagementToken([REDACTED])")
+    }
+}
+
+impl ManagementToken {
+    pub fn generate() -> Result<Self> {
+        DataKey::generate().map(Self)
+    }
+    pub fn create_file(path: &Path) -> Result<Self> {
+        DataKey::create_file(path).map(Self)
+    }
+    pub fn read_file(path: &Path) -> Result<Self> {
+        DataKey::read_file(path).map(Self)
+    }
+    pub fn create_in_keyring() -> Result<String> {
+        #[cfg(feature = "os-keyring")]
+        {
+            os_store::create("dns-guard.management-token.v1")
+        }
+        #[cfg(not(feature = "os-keyring"))]
+        {
+            Err(Error::new(
+                "OS credential store support is not enabled in this build",
+            ))
+        }
+    }
+    pub fn read_keyring(id: &str) -> Result<Self> {
+        #[cfg(feature = "os-keyring")]
+        {
+            os_store::read("dns-guard.management-token.v1", id).map(Self)
+        }
+        #[cfg(not(feature = "os-keyring"))]
+        {
+            let _ = id;
+            Err(Error::new(
+                "OS credential store support is not enabled in this build",
+            ))
+        }
+    }
+    /// Explicit bootstrap/export only. Do not log this value or place it in URLs.
+    pub fn expose_bearer(&self) -> Zeroizing<String> {
+        Zeroizing::new(hex::encode(self.0.0.as_ref()))
+    }
+    pub fn ensure_separate_from(&self, data_key: &DataKey) -> Result<()> {
+        use subtle::ConstantTimeEq;
+        if bool::from(self.0.0.as_ref().ct_eq(data_key.0.as_ref())) {
+            return Err(Error::new(
+                "management token must not reuse the database key",
+            ));
+        }
+        Ok(())
+    }
+}
+
 fn validate_file(metadata: &fs::Metadata) -> Result<()> {
     if !metadata.is_file() || metadata.len() != 32 {
         return Err(Error::new(

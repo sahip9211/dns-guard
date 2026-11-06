@@ -14,13 +14,17 @@ use std::{fs, path::PathBuf, process::Command};
 const SERVICE: &str = "dns-guard.instance-key.v1";
 
 fn entry(id: &str) -> Entry {
+    entry_for(SERVICE, id)
+}
+
+fn entry_for(service: &str, id: &str) -> Entry {
     #[cfg(target_os = "linux")]
     let store = dbus_secret_service_keyring_store::Store::new().unwrap();
     #[cfg(target_os = "macos")]
     let store = apple_native_keyring_store::keychain::Store::new().unwrap();
     #[cfg(target_os = "windows")]
     let store = windows_native_keyring_store::Store::new().unwrap();
-    store.build(SERVICE, id, None).unwrap()
+    store.build(service, id, None).unwrap()
 }
 
 struct Fixture {
@@ -152,4 +156,45 @@ fn native_cli_creates_and_reuses_its_own_credential() {
     );
     assert!(String::from_utf8_lossy(&good.stdout).contains("revision=1"));
     eprintln!("native CLI: deleting its synthetic fixture");
+}
+
+struct ManagementCredential(String);
+impl Drop for ManagementCredential {
+    fn drop(&mut self) {
+        let _ = entry_for("dns-guard.management-token.v1", &self.0).delete_credential();
+    }
+}
+
+#[test]
+#[ignore = "requires an unlocked OS store; use an isolated test keychain/session"]
+fn native_management_namespace_and_cli_token_reuse() {
+    use dns_guard::keys::ManagementToken;
+    let token = ManagementCredential(ManagementToken::create_in_keyring().unwrap());
+    assert!(DataKey::read_keyring(&token.0).is_err());
+    let first = ManagementToken::read_keyring(&token.0)
+        .unwrap()
+        .expose_bearer();
+    let second = ManagementToken::read_keyring(&token.0)
+        .unwrap()
+        .expose_bearer();
+    assert!(first.as_str() == second.as_str());
+    let binary = env!("CARGO_BIN_EXE_dns-guard");
+    let created = Command::new(binary)
+        .args(["management", "token-create", "--keyring"])
+        .output()
+        .unwrap();
+    assert!(created.status.success());
+    let stderr = String::from_utf8(created.stderr).unwrap();
+    let id = stderr
+        .trim()
+        .strip_prefix("management credential ID: ")
+        .unwrap();
+    let _cleanup = ManagementCredential(id.to_owned());
+    let reread = Command::new(binary)
+        .args(["management", "token-show", "--token-keyring", id])
+        .output()
+        .unwrap();
+    assert!(reread.status.success());
+    assert!(created.stdout == reread.stdout);
+    assert_eq!(created.stdout.len(), 65);
 }

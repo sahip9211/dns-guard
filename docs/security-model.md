@@ -3,8 +3,8 @@
 The product requires encryption of private persisted data and distinct instance
 identities. This is separate from authenticating the application's publisher.
 The first implementation target is encrypted configuration and its rollback
-journal. Private indexes, history, backups, credential-vault integration and
-installed service isolation must be qualified separately; see SEC tasks in
+journal. Private indexes, history, backups and installed service isolation
+must be qualified separately; see SEC tasks in
 [the checklist](../task.md).
 
 ## Three different secrets
@@ -20,6 +20,11 @@ key. An install UUID or filesystem path is an identifier, not a secret key.
 
 The service owns the data key. Browser and desktop clients authenticate to its
 API and must not receive the database key or open private storage directly.
+
+The read-only management milestone uses an independent random bearer token with
+its own native-store namespace and refuses reuse of the active database key.
+Restart with a different credential to revoke access; expiry, live rotation and
+roles are not implemented. See [management security scope](management-api.md).
 
 ## What isolates app1 from app2
 

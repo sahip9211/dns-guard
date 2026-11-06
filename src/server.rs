@@ -113,7 +113,7 @@ pub struct Stats {
     cache_evictions: AtomicU64,
 }
 /// Approximate concurrent counters, not a transactional snapshot. No hostnames retained.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct StatsSnapshot {
     pub received: u64,
     pub blocked: u64,

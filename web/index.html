@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DNS Guard · Overview</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header><a href="/" aria-label="DNS Guard home">◈ DNS Guard</a><span>Local dashboard</span></header>
+  <main>
+    <p class="eyebrow">NETWORK OVERVIEW</p>
+    <h1>A clearer view of your DNS.</h1>
+    <p class="intro">Live filtering and cache activity from this service. Query names are not retained.</p>
+    <section id="login" aria-labelledby="login-title">
+      <h2 id="login-title">Connect to your service</h2>
+      <form id="connect">
+        <label for="token">Read-only access token</label>
+        <div class="input-row"><input id="token" type="password" required minlength="64" maxlength="64" pattern="[0-9a-f]{64}" autocomplete="off" spellcheck="false" aria-describedby="token-help"><button type="submit">Connect</button></div>
+        <p id="token-help" class="muted">Use the token from service setup. It stays in this tab until you disconnect or close it.</p>
+      </form>
+    </section>
+    <p id="connection" role="status" aria-live="polite">Not connected</p>
+    <section id="overview" hidden aria-label="Service overview">
+      <div class="toolbar"><p id="service-meta"></p><button id="disconnect" type="button" class="secondary">Disconnect</button></div>
+      <div id="metrics" class="grid"></div>
+      <p class="muted">Counters are cumulative since service startup. Updates every two seconds while this tab is visible. Cache bytes measure cache accounting, not total process memory.</p>
+      <details><summary>All DNS counters</summary><dl id="details"></dl></details>
+      <p class="muted">This first dashboard is read-only. Device policies, source management, latency charts and resource monitoring are still being built.</p>
+    </section>
+  </main>
+  <footer>DNS Guard <span id="version">prototype</span> · Private, local, measured.</footer>
+</body>
+</html>

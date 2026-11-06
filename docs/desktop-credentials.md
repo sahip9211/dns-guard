@@ -119,9 +119,13 @@ CLI-created credentials across CLI invocations separately. A different executabl
 may require Keychain authorization on macOS; silent access by arbitrary programs
 is not a test requirement. CI runs these checks serially in an isolated store.
 
-The Linux release build is 7,397,376 bytes with native desktop libraries, versus
+The pre-management Linux release build was 7,397,376 bytes with native desktop libraries, versus
 6,621,600 bytes for the headless variant. Both bundle SQLCipher/OpenSSL; desktop
 also bundles libdbus and has no external libdbus/OpenSSL runtime link. This does
 not include a Secret Service daemon or prove the full application fits 10 MB.
 See [build measurements](benchmarks/keyring-build.json). No new DNS latency or
 CPU/RAM benchmark is claimed for this change.
+
+Management credentials now use the same libraries under an independent namespace;
+see [management API](management-api.md). The additional native test checks namespace
+separation and repeated CLI token access without exporting the database key.

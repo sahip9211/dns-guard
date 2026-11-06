@@ -4,9 +4,9 @@ Status: prototype in active development. `[x]` means implemented and verified fo
 the stated scope; `[ ]` means unfinished, including partially implemented work.
 The full application is not release-ready. Update this checklist with each milestone.
 
-Latest implementation: encrypted configuration with explicit instance keys.
-OS credential custody, installed instance isolation, authenticated API and the
-first dashboard remain unfinished.
+Latest implementation: encrypted configuration, native credential libraries and
+a read-only authenticated loopback API with an embedded dashboard. Installed
+instance isolation, administrative mutations and desktop packaging remain unfinished.
 Requirements and design rationale: [goal.md](goal.md). Measurements and limitations:
 [implementation status](docs/implementation-status.md).
 
@@ -89,6 +89,7 @@ No completed component substitutes for the whole-product size/performance gates.
 
 - [x] CONFIG-01 — Add schema-v1 bootstrap migration, validation and defaults; recover interrupted transactions and preserve corrupt/unsupported files for explicit restoration.
 - [x] CONFIG-02 — Implement SQLite configuration storage with bounded database pages, a small cache target, no WAL and durable transactional changes; close it before DNS starts.
+- [x] CONFIG-11 — Serve a bounded read-only v1 status API on an optional separate loopback runtime, with independent bearer credentials, strict origin/Host checks and shutdown supervision.
 - [ ] CONFIG-03 — Define versioned API schemas shared by desktop, web and CLI; validate all mutations before activation.
 - [ ] CONFIG-04 — Implement administrator bootstrap, strong credential storage, session/token expiry and revocation; no default password.
 - [ ] CONFIG-05 — Serve management on loopback by default; explicitly configure remote HTTPS and trust.
@@ -138,15 +139,15 @@ No completed component substitutes for the whole-product size/performance gates.
 
 ## Browser application
 
-- [ ] WEB-01 — Build embedded local assets with no CDN dependencies or runtime Node.js requirement; measure final asset sizes.
+- [x] WEB-01 — Build embedded local HTML/CSS/JavaScript assets with no CDN dependencies or runtime Node.js requirement; measure final asset sizes.
 - [ ] WEB-02 — Implement first-run setup for service mode, occupied ports, upstreams, source selection, admin credentials and a real DNS check.
-- [ ] WEB-03 — Build live overview cards/charts from real service data, including errors, cache and resource counters.
+- [ ] WEB-03 — Complete overview charts and CPU/RAM/latency counters; real aggregate DNS/cache cards are implemented.
 - [ ] WEB-04 — Build query explorer/detail view and domain-policy explanation/testing tools.
 - [ ] WEB-05 — Build source manager with freshness, modes, categories, storage, manual refresh and update errors.
 - [ ] WEB-06 — Build devices/groups/profiles, parental schedules, custom rules and exception/undo flows.
 - [ ] WEB-07 — Build upstream, security, logging, backup/restore, service status and diagnostics settings.
 - [ ] WEB-08 — Add accessible keyboard navigation, responsive layouts, light/dark themes, reduced motion and chart text equivalents.
-- [ ] WEB-09 — Test loading/empty/error/disconnected states; bound live subscriptions and pause hidden-view polling.
+- [x] WEB-09 — Test dashboard login/empty/error/disconnected states headlessly; use one bounded polling request and pause hidden-view polling.
 - [ ] WEB-10 — Add localization, saved views and batch operations (P1).
 
 ## Desktop application

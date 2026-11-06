@@ -4,14 +4,15 @@ A compact, exact DNS policy engine in Rust, designed as the foundation for a
 self-hosted filtering service with desktop and browser administration.
 
 **Early development:** the policy engine, compiler, UDP/TCP forwarder and bounded
-DNS response cache and encrypted startup configuration work. The administration UI, scheduled feed refresh and
-production packages are not implemented. The complete application has not yet met its size
+DNS response cache, encrypted startup configuration and a read-only local dashboard work.
+Administrative settings screens, scheduled feed refresh and production packages are not implemented. The complete application has not yet met its size
 or throughput goals.
 
 ## What works
 
 - UDP/TCP DNS filtering, upstream TCP fallback, client network allowlists and bounded concurrency.
 - Bounded positive/negative response caching with TTL aging, eviction and counters.
+- Embedded browser dashboard with authenticated aggregate counters, native-store credentials and bounded HTTP work.
 - Encrypted SQLCipher settings with explicit per-instance keys, revision checks and interrupted-write recovery; no SQL on the DNS path.
 - Exact hostname and subdomain matching with compressed immutable FST indexes.
 - Category-scoped block, allow and enforced-block policies.
@@ -72,6 +73,24 @@ upstream. It does not alter system DNS. The default client access list permits
 loopback only. A LAN deployment needs an explicit listening address and permitted
 client networks. See [DNS service](docs/dns-service.md) for limits, options,
 shutdown, counter definitions and current protocol limitations.
+
+## Open the local dashboard
+
+Create an independent management token, then enable the loopback interface:
+
+```sh
+./target/release/dns-guard management token-create --keyring
+./target/release/dns-guard serve .cache/example.dngi --upstream 127.0.0.1:53 \
+  --management-listen 127.0.0.1:8788 --management-token-keyring PUBLIC_ID
+```
+
+The first command prints a **secret token** on stdout and a public credential ID
+on stderr. Substitute that ID for `PUBLIC_ID`, open `http://127.0.0.1:8788` and
+enter the token. Ordinary startup never prints the secret. The token is read-only,
+held in the tab's memory and distinct from the database encryption key. The API
+is off by default and accepts only numeric loopback binds. See
+[management API](docs/management-api.md) for headless key files, encrypted
+configuration, limits, rotation and headless tests.
 
 ## Fetch blocklists
 

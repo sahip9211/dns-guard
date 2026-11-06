@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 mod config_cli;
+mod management_cli;
 use dns_guard::{Budget, Category, FeedFormat, Index, Limits, compile, parse_feed};
 use std::{fs::File, io::Read, path::Path, sync::Arc, time::Duration};
 
@@ -11,6 +12,8 @@ const HELP: &str = "dns-guard — compact DNS filtering prototype
   dns-guard inspect INDEX
   dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
   dns-guard serve --config DATABASE --key-file KEY_FILE
+  dns-guard management token-create TOKEN_FILE|--keyring
+  dns-guard management token-show --token-file TOKEN_FILE|--token-keyring ID
   dns-guard config keygen KEY_FILE
   dns-guard config keygen --keyring
   dns-guard config encrypt OLD_DATABASE NEW_DATABASE --key-file KEY_FILE
@@ -27,7 +30,13 @@ Serve options:
   --timeout-ms N           Whole upstream exchange deadline, default 2000
   --cache-bytes N          Cache table/payload limit, default 262144; 0 disables
 
-The listener uses one runtime thread. No OS DNS settings are changed.
+Optional read-only dashboard (also accepted with serve --config):
+  --management-listen IP:PORT        Numeric loopback only; disabled by default
+  --management-token-file PATH       Independent private 32-byte token file
+  --management-token-keyring ID      Alternative native credential-store token
+Token creation/show explicitly prints a secret. Do not reuse the database key.
+
+The DNS listener uses one runtime thread; enabled management adds one thread. No OS DNS settings are changed.
 Saved configuration changes apply after restarting the service.
 Configuration is read and closed before starting the DNS runtime.
 Use --keyring ID instead of --key-file PATH to read an existing OS-store key.
@@ -62,6 +71,7 @@ fn run() -> CliResult<()> {
         "compile" => compile_command(&args[1..])?,
         "serve" => serve_command(&args[1..])?,
         "config" => config_cli::run(&args[1..])?,
+        "management" => management_cli::run(&args[1..])?,
         "check" if args.len() >= 4 => {
             let enabled = categories(&args[2])?;
             let index = Index::load(Path::new(&args[1]), Limits::default().max_index_bytes)?;
@@ -100,8 +110,12 @@ fn run() -> CliResult<()> {
 
 fn serve_command(args: &[String]) -> CliResult<()> {
     use dns_guard::server::{Server, ServerConfig};
+    let (args, management_options) = management_cli::extract(args)?;
     let (input, config) = if args.first().is_some_and(|arg| arg == "--config") {
-        let (args, key) = config_cli::with_key(args)?;
+        let (args, key) = config_cli::with_key(&args)?;
+        if let Some(options) = &management_options {
+            options.token.ensure_separate_from(&key)?;
+        }
         if args.len() != 2 {
             return Err(
                 "serve --config requires exactly one database path and no overrides".into(),
@@ -123,8 +137,21 @@ fn serve_command(args: &[String]) -> CliResult<()> {
         .enable_all()
         .build()?
         .block_on(async move {
+            let rule_count = index.rule_count();
+            let index_bytes = index.as_bytes().len();
             let server = Server::bind(config, index).await?;
             let stats = server.stats();
+            let mut management = management_options
+                .map(|options| {
+                    dns_guard::management::Management::start(
+                        options.address,
+                        options.token,
+                        stats.clone(),
+                        rule_count,
+                        index_bytes,
+                    )
+                })
+                .transpose()?;
             // Install termination handlers before announcing readiness.
             #[cfg(unix)]
             let mut terminate =
@@ -135,11 +162,29 @@ fn serve_command(args: &[String]) -> CliResult<()> {
                 #[cfg(not(unix))]
                 let _ = tokio::signal::ctrl_c().await;
             };
+            if let Some(manager) = &management {
+                eprintln!("Management listening on http://{}", manager.local_addr());
+            }
             eprintln!(
                 "DNS listening on {} (UDP/TCP, workers=1)",
                 server.local_addr()?
             );
-            server.run(stop).await?;
+            let management_stopped = async {
+                if let Some(manager) = &mut management {
+                    manager.stopped().await;
+                } else {
+                    std::future::pending::<()>().await;
+                }
+            };
+            let result = server
+                .run(async {
+                    tokio::select! { _ = stop => {}, _ = management_stopped => {} }
+                })
+                .await;
+            if let Some(manager) = management {
+                manager.shutdown()?;
+            }
+            result?;
             eprintln!("DNS stopped: {:?}", stats.snapshot());
             Ok::<(), Box<dyn std::error::Error>>(())
         })

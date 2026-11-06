@@ -9,6 +9,7 @@ mod domain;
 mod feeds;
 mod index;
 pub mod keys;
+pub mod management;
 pub mod server;
 mod storage;
 
