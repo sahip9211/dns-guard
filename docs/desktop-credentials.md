@@ -13,8 +13,8 @@ reports failure; it does not implement an OS vault or an encryption algorithm.
 
 All use `keyring-core` 1.0.1. Only the current platform's backend is compiled.
 Linux uses the OpenSSL provider already bundled for SQLCipher, with bundled
-libdbus. Secret Service itself is supplied by the desktop; its installation and
-resource costs must count if the deployment adds it. No plaintext/file/mock
+libdbus. Secret Service itself is supplied by the desktop; any required runtime
+beyond the defined OS baseline counts even if shared or already installed. No plaintext/file/mock
 fallback is selected when the native store is unavailable. The library's mock
 store is used only in unit tests.
 
@@ -99,3 +99,29 @@ CI runs the native test with Windows Credential Manager and a disposable macOS
 Keychain as well as Linux Secret Service. These are functional store tests, not
 cross-OS-user confinement or signed-package upgrade qualification. Platform CI
 must pass before that platform is considered validated.
+
+Recorded on 2026-11-06: the Linux native test passed in
+[implementation CI](https://github.com/sahip9211/dns-guard/actions/runs/42258826959/job/128033083136),
+and Windows Credential Manager passed its native test in the
+[same implementation run](https://github.com/sahip9211/dns-guard/actions/runs/42258826959/job/128033082991).
+The original macOS test timed out; after separating the CLI and library test
+identities and configuring the disposable keychain search list, both revised
+native tests passed in the
+[macOS rerun](https://github.com/sahip9211/dns-guard/actions/runs/42260119119/job/128037527322).
+The production Rust code is identical between those two commits; the latter
+changes the test harness and CI setup. Full release-job completion is separate
+from the native-test results. Local validation also passed 92 ordinary Rust
+tests, two revised Linux native tests, four systemd integration tests, formatting,
+Clippy and the minimal-feature build check.
+
+The native suite tests library-created credentials within the test executable and
+CLI-created credentials across CLI invocations separately. A different executable
+may require Keychain authorization on macOS; silent access by arbitrary programs
+is not a test requirement. CI runs these checks serially in an isolated store.
+
+The Linux release build is 7,397,376 bytes with native desktop libraries, versus
+6,621,600 bytes for the headless variant. Both bundle SQLCipher/OpenSSL; desktop
+also bundles libdbus and has no external libdbus/OpenSSL runtime link. This does
+not include a Secret Service daemon or prove the full application fits 10 MB.
+See [build measurements](benchmarks/keyring-build.json). No new DNS latency or
+CPU/RAM benchmark is claimed for this change.

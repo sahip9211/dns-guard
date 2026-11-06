@@ -102,14 +102,14 @@ No completed component substitutes for the whole-product size/performance gates.
 
 - [x] SEC-01 — Encrypt configuration and journals with authenticated database encryption; test wrong keys, corruption and interruption without plaintext fallback.
 - [ ] SEC-02 — Protect private policy indexes, query history, exports, backups and temporary artifacts; identify and eliminate remaining plaintext copies.
-- [ ] SEC-03 — Give each instance an independent OS-generated data key; never share keys across installations or derive them from a public instance identifier.
+- [x] SEC-03 — Give each instance an independent OS-generated data key; never share keys across installations or derive them from a public instance identifier.
 - [ ] SEC-04 — Provision separate service identities and private data directories; qualify ownership, ACLs and confinement on Linux, Windows and macOS.
 - [ ] SEC-05 — Integrate OS credential custody for unattended services and desktop unlock; document same-user and administrator limitations without claiming code signing creates instance isolation.
 - [ ] SEC-06 — Add safe key rotation, recovery/export, intentional migration and reinstallation/restore workflows; never reset an unreadable instance automatically.
 - [ ] SEC-07 — Keep data-encryption, API-authentication and release-signing keys separate; retain release private keys outside shipped binaries and repositories.
 - [ ] SEC-08 — Test cross-instance access under actual OS identities, malicious replacement, replay/rollback limits, memory/crash dump exposure and encrypted-size/resource budgets.
 - [x] SEC-09 — Verify native systemd encrypted-credential delivery, wrong-key rejection, credential cleanup and DNS startup without adding runtime dependencies; provide a system unit template pending privileged isolation qualification.
-- [ ] SEC-10 — Integrate maintained native credential libraries and pass real-store tests on Linux, Windows and macOS, with no plaintext fallback and an optional minimal headless build.
+- [x] SEC-10 — Integrate maintained native credential libraries and pass real-store tests on Linux, Windows and macOS, with no plaintext fallback and an optional minimal headless build.
 
 ## Clients, profiles and parental controls
 

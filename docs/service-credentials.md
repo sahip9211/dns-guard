@@ -82,8 +82,9 @@ cross-account isolation still require privileged installation tests. The test
 runner's ordinary account cannot install those services here. User-service tests
 do not establish a boundary against other processes under that same user.
 
-No Rust production code or dependency changed: executable size remains
-6,621,088 bytes. Unit files and encrypted credential blobs still count toward the
+The systemd-only integration at commit `a296f16` added no Rust production code or
+dependency; its executable was 6,621,088 bytes. The subsequent desktop integration
+has [separately measured build variants](size-budget.md). Unit files and encrypted credential blobs still count toward the
 complete installed-size budget. Cold-start memory, credential-manager overhead,
 and system-instance resource limits have not been newly qualified.
 

@@ -1,0 +1,33 @@
+{
+  "kind": "native-credential-library-build-comparison",
+  "implementation_commit": "49cea5f8d2681ed188a4d884398843cd3c0710a2",
+  "platform": "Linux x86_64",
+  "date": "2026-11-06",
+  "builds": {
+    "desktop": {
+      "bytes": 7397376,
+      "sha256": "c5b80361b0c594abfccb02724f1fb53f3ff3105bb43f69b07f55a1c1a9c2a3a8",
+      "command": "cargo build --release --locked"
+    },
+    "headless": {
+      "bytes": 6621600,
+      "sha256": "1d2238700590d9b7b99d14ca154d8d1d4400894a2cfed6140de5bfcd0f73fc67",
+      "command": "cargo build --release --locked --no-default-features"
+    }
+  },
+  "scope": "Executable bytes only. Excludes OS credential daemon/state, UI, indexes, other assets, notices and update overlap. No DNS performance comparison performed.",
+  "dynamic_dependencies": [
+    "libgcc_s.so.1",
+    "libc.so.6",
+    "ELF interpreter"
+  ],
+  "test_index_bytes": 1018122,
+  "test_configuration_bytes": 12288,
+  "native_library_increment_bytes": 775776,
+  "native_validation": {
+    "linux": "42258826959/job/128033083136",
+    "windows": "42258826959/job/128033082991",
+    "macos": "42260119119/job/128037527322",
+    "revised_test_commit": "e01fda1896fda5556ecb5fbe62826696928a4b59"
+  }
+}
