@@ -27,8 +27,14 @@ Replace the documentation upstream address with a reachable resolver. `instance.
 is a development credential file: keep it in a trusted private location, separate
 from database backups, and do not commit it. Use a distinct generated key for each
 new instance. This interface is not an OS credential vault and does not isolate
-hostile copies running as the same user. See [security boundaries](security-model.md). The
-default listener and ACL permit loopback clients only. `init` accepts the same
+hostile copies running as the same user. See [security boundaries](security-model.md).
+
+Preserve the existing key when upgrading or reinstalling the same instance.
+Losing the key makes its encrypted database unrecoverable; reinstalling the
+application cannot regenerate it. Keep a protected recovery copy separately from
+database backups. A new independent instance gets a new key and data directory.
+
+The default listener and ACL permit loopback clients only. `init` accepts the same
 DNS options as `serve`, requires an explicit upstream and refuses to replace
 an existing file. Index paths are validated and stored as absolute paths, so a
 different startup working directory does not change which index is used.

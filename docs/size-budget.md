@@ -22,13 +22,15 @@ loading, and compiling SQLite for size while retaining Rust DNS optimization,
 reduced it from 3,252,408 bytes. The previous DNS/cache-only binary was 1,032,472
 bytes. These are separate feature/build comparisons, not compression ratios.
 
-The current 87,812-policy test index is 1,018,122 bytes. The configuration database
-uses 12,288 bytes in this fixture; reserve 200 KiB for its database/journal update
-budget. Executable + index + that reservation total 3,076,578 bytes, excluding
-notices, UI, analytics, retained feeds, other state and index update overlap.
-These figures predate SQLCipher encryption; the encrypted build needs fresh
-measurements including its crypto provider. The complete-product target is still
-unproven. See [configuration limits](configuration.md).
+The encrypted-configuration Linux executable is **6,621,088 bytes**, including
+SQLCipher and its bundled OpenSSL provider. It exceeds the initial 3 MB service
+allocation below. The current 87,812-policy test index is 1,018,122 bytes, the
+encrypted configuration fixture is 12,288 bytes, and its raw key is 32 bytes.
+Those four components total **7,651,530 bytes**, excluding notices, UI, analytics,
+retained feeds, other state and index update overlap. Reserve 200 KiB for the
+database/journal update budget instead of counting only its resting file size.
+The complete-product target remains unproven. See [encryption measurements](encryption-validation.md)
+and [configuration limits](configuration.md).
 
 The update publisher gates `other bytes + old index + staged index` against the
 strict ceiling using a caller-supplied inventory. See the

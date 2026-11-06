@@ -1,0 +1,277 @@
+{
+  "kind": "encrypted-startup-configuration-dns-regression",
+  "workload": "blocked ads.example A over UDP; closed loop; no upstream used",
+  "clients": 32,
+  "duration_each_s": 60,
+  "cpu_limit_percent_one_core": 50,
+  "memory_limit_bytes": 8388608,
+  "index_bytes": 1018122,
+  "index_sha256": "36ce8c7a5d64a7802e1113969135ed5f4a9add97999137d2080d31b15afcacf5",
+  "configuration_bytes": {
+    "plain": 12288,
+    "encrypted": 12288
+  },
+  "builds": {
+    "plain": {
+      "bytes": 1853656,
+      "sha256": "459ce95965a7f5aab190014d92641b7bef8d6338e935ea776f9bf573a8395348"
+    },
+    "encrypted": {
+      "bytes": 6621088,
+      "sha256": "02b2a4037d5e5cb80b39ed8e409150253a9af1a92629f691d39771cbe27df249"
+    }
+  },
+  "cases": {
+    "plain": {
+      "readiness_with_unit_launch_ms": 497.3633689987764,
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2744320,
+        "memory_peak_bytes": 3874816,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 226514,
+          "user_usec": 206352,
+          "system_usec": 20162,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 49,
+          "nr_throttled": 43,
+          "throttled_usec": 190546,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "probe_exit_code": 0,
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2740224,
+        "memory_peak_bytes": 3874816,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 13979621,
+          "user_usec": 6244836,
+          "system_usec": 7734785,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6043,
+          "nr_throttled": 51,
+          "throttled_usec": 214556,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "server_log": "Using configuration revision 1\nDNS listening on 127.0.0.1:45503 (UDP/TCP, workers=1)\nDNS stopped: StatsSnapshot { received: 143376, blocked: 143376, forwarded: 0, upstream_errors: 0, invalid: 0, overloaded: 0, denied: 0, send_errors: 0, inflight: 0, peak_inflight: 32, cache_hits: 0, cache_misses: 0, cache_entries: 0, cache_bytes: 24648, cache_evictions: 0 }\n",
+      "report": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T16:26:55.942798+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.00699545799944,
+        "attempts": 143376,
+        "correct": 143376,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 2389.3214267052053,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 0.452,
+        "p95_ms_upper_bound": 58.674,
+        "p99_ms_upper_bound": null,
+        "max_ms": 549.443428,
+        "latency_above_100ms": 3224,
+        "resources": {
+          "server": {
+            "samples": 218,
+            "sampled_duration_s": 60.00254907899944,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 22.91569310146596,
+            "cpu_peak_sampled_percent_one_core": 33.65733292421102,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 2.864461637683245,
+            "rss_peak_sampled_bytes": 4603904,
+            "rss_mean_sampled_bytes": 4603904
+          },
+          "generator": {
+            "samples": 218,
+            "sampled_duration_s": 60.0023808779988,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 73.36375549747711,
+            "cpu_peak_sampled_percent_one_core": 94.72068709361396,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 9.17046943718464,
+            "rss_peak_sampled_bytes": 26054656,
+            "rss_mean_sampled_bytes": 26048042.275229357
+          }
+        },
+        "p99_interpretation": "greater than 100 ms"
+      }
+    },
+    "encrypted": {
+      "readiness_with_unit_launch_ms": 426.15526400186354,
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2899968,
+        "memory_peak_bytes": 2904064,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 198889,
+          "user_usec": 183207,
+          "system_usec": 15681,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 43,
+          "nr_throttled": 40,
+          "throttled_usec": 181575,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "probe_exit_code": 0,
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2400256,
+        "memory_peak_bytes": 3166208,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 14374100,
+          "user_usec": 6402144,
+          "system_usec": 7971956,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6039,
+          "nr_throttled": 43,
+          "throttled_usec": 183050,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "server_log": "Using configuration revision 1\nDNS listening on 127.0.0.1:39275 (UDP/TCP, workers=1)\nDNS stopped: StatsSnapshot { received: 159127, blocked: 159127, forwarded: 0, upstream_errors: 0, invalid: 0, overloaded: 0, denied: 0, send_errors: 0, inflight: 0, peak_inflight: 7, cache_hits: 0, cache_misses: 0, cache_entries: 0, cache_bytes: 24648, cache_evictions: 0 }\n",
+      "report": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T16:27:57.260752+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.004898688999674,
+        "attempts": 159127,
+        "correct": 159127,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 2651.90015276489,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 4.49,
+        "p95_ms_upper_bound": 47.276,
+        "p99_ms_upper_bound": null,
+        "max_ms": 534.865984,
+        "latency_above_100ms": 2910,
+        "resources": {
+          "server": {
+            "samples": 223,
+            "sampled_duration_s": 60.00032018699858,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 23.633207215905244,
+            "cpu_peak_sampled_percent_one_core": 33.76297213736749,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 2.9541509019881556,
+            "rss_peak_sampled_bytes": 8323072,
+            "rss_mean_sampled_bytes": 8323072
+          },
+          "generator": {
+            "samples": 223,
+            "sampled_duration_s": 60.00042902600035,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 75.16612919627049,
+            "cpu_peak_sampled_percent_one_core": 99.29212187583494,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 9.395766149533811,
+            "rss_peak_sampled_bytes": 26476544,
+            "rss_mean_sampled_bytes": 26318434.7264574
+          }
+        },
+        "p99_interpretation": "greater than 100 ms"
+      }
+    }
+  },
+  "source_files_sha256": {
+    "Cargo.lock": "7fb44274934d9ca254246811b7591f8c7a583549a41d65053d6b46ca7149f5cf",
+    "Cargo.toml": "b579992283cb8eda41aea88256c1555b0dc7660c89848aa6d1d117686a2e41d6",
+    ".cargo/config.toml": "10657979b35c94e338fb2e8e86f459b18454d521b0f2ca1f07b1a48447ebcdbb",
+    "src/cache/tests.rs": "0053116baa0580e326be88c48154e7f778d17d3c3b49a124c12a4164b0ede76f",
+    "src/cache.rs": "887308a464cdcef629c7581a131949e214608c0acfd88387c19078aba1dae5df",
+    "src/config/tests.rs": "df3bd12a9dd13802cf60ca6016c527cac0f609e790c67865a284b45974c9dd0c",
+    "src/config.rs": "91a531b321c7995fbb62f76d7f5983f6e53781ee0708845877fe335f06247913",
+    "src/config_cli.rs": "2b807f8c4012091f8d3c0ff1205c630adf30695c003604df6025a4f061bfcba4",
+    "src/domain.rs": "4e369609db647a093dca854aa59214cc35a8ade5234f556e2720ed788ac07adb",
+    "src/feeds.rs": "22f53545b5f4cac7f5c8c7941fe398922586f24d6dede6f76e84b0aaef2bf956",
+    "src/index.rs": "87d04da0fb52a68dffd84a1aa85568ac4b7a134367822c3d1ffabe7344295e4d",
+    "src/keys.rs": "ce20f4abaea807b213071b6bb1ceed9738cd388572a5a60ffc2539666956c407",
+    "src/lib.rs": "32e99b2835a004b7871a12ccdda3f1763591da7522cd258793571be54ab2fdd9",
+    "src/main.rs": "c1dc56405cd739b4621f4f4fb211ffdc4852c5ef7d94a2753377e7532504c7e2",
+    "src/server.rs": "9f4f84efa1e9185c04c2e6a01c2ca5c320c996164c773636b20a5fd538be8a2a",
+    "src/storage.rs": "c4d9dae2699cf349ef89d990f6ea6b6a6f651080a1d7bb9c812a278c7727ef0c",
+    "src/config/schema.sql": "8e30ef8cd2cfbd8e25092136879feb5b6cd893a6d1a7154cb6bf269ed4e29955"
+  },
+  "implementation_commit": "3bc53524dce5c6ed0446aef47c3648a99a08a2a3",
+  "baseline_commit": "699c299",
+  "caveats": [
+    "Sequential closed-loop diagnostic on a contended shared desktop; not a capacity or encryption speedup result.",
+    "p99 exceeds 100 ms in both cases; histogram overflow prevents an exact percentile.",
+    "Warm shared file pages may be charged outside the test cgroup; no cold-start memory qualification.",
+    "Resource samples omitted from published report; aggregates retained."
+  ],
+  "host_observation": {
+    "logical_cpus": 8,
+    "load_average_1_5_15_minutes": [
+      11.52,
+      12.54,
+      11.23
+    ]
+  }
+}

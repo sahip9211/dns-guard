@@ -18,6 +18,9 @@ installed service isolation must be qualified separately; see SEC tasks in
 All copies can share the publisher's verification key. They must not share a data
 key. An install UUID or filesystem path is an identifier, not a secret key.
 
+The service owns the data key. Browser and desktop clients authenticate to its
+API and must not receive the database key or open private storage directly.
+
 ## What isolates app1 from app2
 
 Each new instance needs its own key, data directory, service identity, endpoint
