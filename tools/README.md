@@ -86,3 +86,10 @@ uncompressed name or a compression pointer to the question. It is not a general
 DNS response parser. Compare `serve --cache-bytes 0` with the default cache using
 the same upstream, binary, index and resource limits; report upstream request
 counts as well as client latency. The workload does not establish office capacity.
+
+CPU summaries count one logical core as 100%. Peak estimates now use windows of
+at least 100 ms, accumulating shorter samples and excluding an incomplete final
+window from the peak calculation. This avoids magnifying a single `/proc` clock
+tick into a spurious short-interval peak. Mean CPU still uses the whole sampled
+duration, and RSS peaks include every sample. A run shorter than one complete
+window has a null CPU peak. These estimates do not replace verified cgroup limits.

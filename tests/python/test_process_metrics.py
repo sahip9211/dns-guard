@@ -20,6 +20,24 @@ class ProcessMetricsTests(unittest.TestCase):
         self.assertEqual(report['rss_peak_sampled_bytes'], 3000)
         self.assertEqual(report['rss_mean_sampled_bytes'], 2000)
 
+    def test_short_final_sample_does_not_turn_one_cpu_tick_into_a_peak_spike(self):
+        report = summarize([
+            {'elapsed_s': 0, 'cpu_s': 0, 'rss_bytes': 1000},
+            {'elapsed_s': .2, 'cpu_s': .05, 'rss_bytes': 1000},
+            {'elapsed_s': .204, 'cpu_s': .06, 'rss_bytes': 1000},
+        ], 1)
+        self.assertEqual(report['cpu_peak_sampled_percent_one_core'], 25)
+        self.assertAlmostEqual(report['cpu_mean_percent_one_core'], 100 * .06 / .204)
+
+    def test_peak_cpu_windows_accumulate_short_samples(self):
+        report = summarize([
+            {'elapsed_s': 0, 'cpu_s': 0, 'rss_bytes': 1000},
+            {'elapsed_s': .02, 'cpu_s': .01, 'rss_bytes': 1000},
+            {'elapsed_s': .04, 'cpu_s': .02, 'rss_bytes': 1000},
+            {'elapsed_s': .1, 'cpu_s': .05, 'rss_bytes': 1000},
+        ], 1)
+        self.assertEqual(report['cpu_peak_sampled_percent_one_core'], 50)
+
 
 if __name__ == '__main__':
     unittest.main()

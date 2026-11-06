@@ -12,11 +12,12 @@ fn database_full_rolls_back_partial_work_without_losing_previous_settings() {
     let mut store = ConfigStore::create(&path, &settings).unwrap();
     let tx = store.connection.transaction().unwrap();
     tx.execute_batch("UPDATE settings SET revision=2; DELETE FROM allowed_clients; CREATE TABLE overflow(value BLOB);").unwrap();
-    let error = loop {
-        if let Err(error) = tx.execute("INSERT INTO overflow VALUES (zeroblob(3000))", []) {
-            break error;
-        }
-    };
+    let error = (0..32)
+        .find_map(|_| {
+            tx.execute("INSERT INTO overflow VALUES (zeroblob(3000))", [])
+                .err()
+        })
+        .expect("database page limit was not enforced within 32 bounded insertions");
     assert!(
         matches!(error, rusqlite::Error::SqliteFailure(e, _) if e.code == rusqlite::ErrorCode::DiskFull)
     );

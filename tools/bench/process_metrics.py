@@ -17,10 +17,14 @@ def summarize(samples, logical_cpus):
     if len(samples) < 2:
         return {'samples': len(samples), 'warning': 'insufficient process samples'}
     intervals = []
-    for prev, curr in zip(samples, samples[1:]):
-        duration = curr['elapsed_s'] - prev['elapsed_s']
-        if duration > 0:
-            intervals.append(100 * (curr['cpu_s'] - prev['cpu_s']) / duration)
+    # /proc CPU time is quantized in clock ticks. A short final sample can
+    # otherwise turn one tick into an impossible-looking instantaneous spike.
+    window = samples[0]
+    for curr in samples[1:]:
+        duration = curr['elapsed_s'] - window['elapsed_s']
+        if duration >= .1:
+            intervals.append(100 * (curr['cpu_s'] - window['cpu_s']) / duration)
+            window = curr
     duration = samples[-1]['elapsed_s'] - samples[0]['elapsed_s']
     cpu = 100 * (samples[-1]['cpu_s'] - samples[0]['cpu_s']) / duration
     return {
@@ -28,7 +32,8 @@ def summarize(samples, logical_cpus):
         'sampled_duration_s': duration,
         'logical_cpus': logical_cpus,
         'cpu_mean_percent_one_core': cpu,
-        'cpu_peak_sampled_percent_one_core': max(intervals, default=0),
+        'cpu_peak_sampled_percent_one_core': max(intervals, default=None),
+        'cpu_peak_window_min_s': .1,
         'cpu_mean_percent_machine': cpu / logical_cpus,
         'rss_peak_sampled_bytes': max(s['rss_bytes'] for s in samples),
         'rss_mean_sampled_bytes': statistics.mean(s['rss_bytes'] for s in samples),
