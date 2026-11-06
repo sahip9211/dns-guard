@@ -1,0 +1,566 @@
+{
+  "kind": "management-dns-regression",
+  "date": "2026-11-07",
+  "workload": "blocked ads.example A over UDP, encrypted startup configuration, 32 closed-loop clients, no upstream used",
+  "duration_each_s": 60,
+  "memory_limit_bytes": 8388608,
+  "cpu_limit_percent_one_core": 50,
+  "builds": {
+    "previous": {
+      "bytes": 7397376,
+      "sha256": "c5b80361b0c594abfccb02724f1fb53f3ff3105bb43f69b07f55a1c1a9c2a3a8"
+    },
+    "management": {
+      "bytes": 7642368,
+      "sha256": "4a49e09940561c682ac67e99cc400cb753c9fd0feb884398d159b66987e894e6"
+    }
+  },
+  "index": {
+    "bytes": 1018122,
+    "sha256": "36ce8c7a5d64a7802e1113969135ed5f4a9add97999137d2080d31b15afcacf5"
+  },
+  "configuration_bytes": 12288,
+  "cases": {
+    "previous": {
+      "probe_exit_code": 0,
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 3010560,
+        "memory_peak_bytes": 3063808,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 105614,
+          "user_usec": 93942,
+          "system_usec": 11672,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 23,
+          "nr_throttled": 19,
+          "throttled_usec": 91552,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2428928,
+        "memory_peak_bytes": 3063808,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 16102541,
+          "user_usec": 6614934,
+          "system_usec": 9487606,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6024,
+          "nr_throttled": 24,
+          "throttled_usec": 102759,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "dns": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T19:05:12.847204+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.002899389997765,
+        "attempts": 441980,
+        "correct": 441980,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 7365.977385980722,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 4.316,
+        "p95_ms_upper_bound": 5.972,
+        "p99_ms_upper_bound": 7.297,
+        "max_ms": 45.337968,
+        "latency_above_100ms": 0,
+        "resources": {
+          "server": {
+            "samples": 292,
+            "sampled_duration_s": 60.00134801799868,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 26.649401268790594,
+            "cpu_peak_sampled_percent_one_core": 34.192562802838744,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.3311751585988243,
+            "rss_peak_sampled_bytes": 8589312,
+            "rss_mean_sampled_bytes": 8588849.09589041
+          },
+          "generator": {
+            "samples": 292,
+            "sampled_duration_s": 60.00124109400349,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 94.51471163930238,
+            "cpu_peak_sampled_percent_one_core": 102.50422057443237,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.814338954912797,
+            "rss_peak_sampled_bytes": 26169344,
+            "rss_mean_sampled_bytes": 25973184.87671233
+          }
+        }
+      }
+    },
+    "management_disabled": {
+      "probe_exit_code": 0,
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2838528,
+        "memory_peak_bytes": 2838528,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 106800,
+          "user_usec": 94040,
+          "system_usec": 12759,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 23,
+          "nr_throttled": 19,
+          "throttled_usec": 91552,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 2441216,
+        "memory_peak_bytes": 3100672,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 15673353,
+          "user_usec": 6440684,
+          "system_usec": 9232668,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6024,
+          "nr_throttled": 23,
+          "throttled_usec": 95694,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "dns": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T19:06:13.471812+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.00236347500322,
+        "attempts": 424554,
+        "correct": 424554,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 7075.621282432779,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 4.497,
+        "p95_ms_upper_bound": 6.747,
+        "p99_ms_upper_bound": 8.726,
+        "max_ms": 24.51532,
+        "latency_above_100ms": 0,
+        "resources": {
+          "server": {
+            "samples": 292,
+            "sampled_duration_s": 60.00040486900252,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 25.949824895337983,
+            "cpu_peak_sampled_percent_one_core": 34.12449363086144,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.243728111917248,
+            "rss_peak_sampled_bytes": 8921088,
+            "rss_mean_sampled_bytes": 8920176.219178082
+          },
+          "generator": {
+            "samples": 292,
+            "sampled_duration_s": 60.00032418400224,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 94.416156529875,
+            "cpu_peak_sampled_percent_one_core": 102.6040753092392,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.802019566234375,
+            "rss_peak_sampled_bytes": 26263552,
+            "rss_mean_sampled_bytes": 26263103.12328767
+          }
+        }
+      }
+    },
+    "management_polling": {
+      "probe_exit_code": 0,
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 3047424,
+        "memory_peak_bytes": 3047424,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 117756,
+          "user_usec": 108199,
+          "system_usec": 9556,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 26,
+          "nr_throttled": 22,
+          "throttled_usec": 107481,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 3371008,
+        "memory_peak_bytes": 4636672,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 15879485,
+          "user_usec": 6844703,
+          "system_usec": 9034782,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6029,
+          "nr_throttled": 27,
+          "throttled_usec": 120185,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "dns": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T19:07:14.157505+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.00205256100162,
+        "attempts": 438562,
+        "correct": 438562,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 7309.116626537601,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 4.31,
+        "p95_ms_upper_bound": 6.327,
+        "p99_ms_upper_bound": 8.169,
+        "max_ms": 17.785512,
+        "latency_above_100ms": 0,
+        "resources": {
+          "server": {
+            "samples": 292,
+            "sampled_duration_s": 60.00019614700432,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 26.283247410329277,
+            "cpu_peak_sampled_percent_one_core": 34.232422814788336,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.2854059262911597,
+            "rss_peak_sampled_bytes": 8830976,
+            "rss_mean_sampled_bytes": 8830513.09589041
+          },
+          "generator": {
+            "samples": 292,
+            "sampled_duration_s": 60.00006707799912,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 94.53322764833732,
+            "cpu_peak_sampled_percent_one_core": 102.24665802648425,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.816653456042165,
+            "rss_peak_sampled_bytes": 26128384,
+            "rss_mean_sampled_bytes": 26127935.12328767
+          }
+        }
+      },
+      "k6_exit_code": 0,
+      "management_http": {
+        "kind": "k6-real-management-api",
+        "configured_rate": 20,
+        "duration": "60s",
+        "metrics": {
+          "http_reqs": {
+            "type": "counter",
+            "contains": "default",
+            "values": {
+              "count": 1200,
+              "rate": 19.998560263316215
+            }
+          },
+          "http_req_duration": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "avg": 0.32382748333333283,
+              "med": 0.310879,
+              "p(95)": 0.40351945,
+              "p(99)": 0.5972270199999999,
+              "max": 4.089137
+            },
+            "thresholds": {
+              "p(99)<20": {
+                "ok": true
+              }
+            }
+          },
+          "iterations": {
+            "values": {
+              "count": 1200,
+              "rate": 19.998560263316215
+            },
+            "type": "counter",
+            "contains": "default"
+          },
+          "checks": {
+            "type": "rate",
+            "contains": "default",
+            "values": {
+              "fails": 0,
+              "rate": 1,
+              "passes": 1200
+            },
+            "thresholds": {
+              "rate==1": {
+                "ok": true
+              }
+            }
+          },
+          "data_received": {
+            "type": "counter",
+            "contains": "data",
+            "values": {
+              "count": 903002,
+              "rate": 15048.949929079223
+            }
+          },
+          "http_req_tls_handshaking": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "avg": 0,
+              "med": 0,
+              "p(95)": 0,
+              "p(99)": 0,
+              "max": 0
+            }
+          },
+          "http_req_sending": {
+            "contains": "time",
+            "values": {
+              "p(95)": 0.07225774999999998,
+              "p(99)": 0.10532794999999999,
+              "max": 2.037067,
+              "avg": 0.052582851666666715,
+              "med": 0.0485255
+            },
+            "type": "trend"
+          },
+          "http_req_connecting": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "avg": 0.18453678250000013,
+              "med": 0.1759485,
+              "p(95)": 0.23263199999999998,
+              "p(99)": 0.33172723999999987,
+              "max": 4.289925
+            }
+          },
+          "dropped_iterations": {
+            "type": "counter",
+            "contains": "default",
+            "values": {
+              "count": 0,
+              "rate": 0
+            },
+            "thresholds": {
+              "count==0": {
+                "ok": true
+              }
+            }
+          },
+          "http_req_receiving": {
+            "contains": "time",
+            "values": {
+              "med": 0.110656,
+              "p(95)": 0.16226399999999996,
+              "p(99)": 0.21381593999999987,
+              "max": 1.441747,
+              "avg": 0.11681094166666671
+            },
+            "type": "trend"
+          },
+          "http_req_failed": {
+            "values": {
+              "rate": 0,
+              "passes": 0,
+              "fails": 1200
+            },
+            "thresholds": {
+              "rate==0": {
+                "ok": true
+              }
+            },
+            "type": "rate",
+            "contains": "default"
+          },
+          "http_req_waiting": {
+            "values": {
+              "p(99)": 0.23787047999999997,
+              "max": 1.217262,
+              "avg": 0.15443369000000018,
+              "med": 0.148056,
+              "p(95)": 0.2043766
+            },
+            "type": "trend",
+            "contains": "time"
+          },
+          "vus": {
+            "type": "gauge",
+            "contains": "default",
+            "values": {
+              "value": 0,
+              "min": 0,
+              "max": 0
+            }
+          },
+          "http_req_blocked": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "p(99)": 0.4941296199999999,
+              "max": 5.888608,
+              "avg": 0.2866466983333332,
+              "med": 0.27050799999999997,
+              "p(95)": 0.3660081
+            }
+          },
+          "iteration_duration": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "avg": 0.8883323816666668,
+              "med": 0.8386875,
+              "p(95)": 1.1050634,
+              "p(99)": 1.5405761799999989,
+              "max": 15.086664
+            }
+          },
+          "status_error_rate": {
+            "contains": "default",
+            "values": {
+              "rate": 0,
+              "passes": 0,
+              "fails": 1200
+            },
+            "thresholds": {
+              "rate==0": {
+                "ok": true
+              }
+            },
+            "type": "rate"
+          },
+          "data_sent": {
+            "type": "counter",
+            "contains": "data",
+            "values": {
+              "count": 206400,
+              "rate": 3439.7523652903888
+            }
+          },
+          "vus_max": {
+            "type": "gauge",
+            "contains": "default",
+            "values": {
+              "max": 4,
+              "value": 4,
+              "min": 4
+            }
+          },
+          "http_req_duration{expected_response:true}": {
+            "type": "trend",
+            "contains": "time",
+            "values": {
+              "avg": 0.32382748333333283,
+              "med": 0.310879,
+              "p(95)": 0.40351945,
+              "p(99)": 0.5972270199999999,
+              "max": 4.089137
+            }
+          }
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Shared desktop and loopback generator; not an offered-arrival DNS capacity test.",
+    "Cold/warm caches and sequential order can affect results.",
+    "Management k6 uses 20 HTTP requests/sec; it is not DNS throughput.",
+    "Index, keys, raw samples and credential values are excluded from this public aggregate.",
+    "Subsequent default-port origin normalization is covered by tests; performance data identifies the pre-fix artifact.",
+    "RSS includes shared file-backed pages; cgroup charge is not total process RSS. Warm shared-page accounting does not qualify a cold standalone 8MiB machine."
+  ],
+  "implementation_commit": "bd30509d7e43c5fc4f2b358aae5c09c5d89b1eb4"
+}

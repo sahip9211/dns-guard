@@ -22,17 +22,23 @@ loading, and compiling SQLite for size while retaining Rust DNS optimization,
 reduced it from 3,252,408 bytes. The previous DNS/cache-only binary was 1,032,472
 bytes. These are separate feature/build comparisons, not compression ratios.
 
-The Linux executable with native desktop credential libraries is **7,397,376 bytes**.
-The minimal `--no-default-features` build is **6,621,600 bytes**, retaining SQLCipher
-and bundled OpenSSL but omitting desktop keyring dependencies. The native-library
-increment is **775,776 bytes**; both exceed the initial 3 MB service allocation.
-The current 87,812-policy test index is 1,018,122 bytes and the encrypted
-configuration fixture is 12,288 bytes. Desktop executable + index + configuration
-total **8,427,786 bytes**, excluding credential-store state/runtime, notices, UI,
-analytics, retained feeds, other state and index update overlap. Reserve 200 KiB for the
-database/journal update budget instead of counting only its resting file size.
-The complete-product target remains unproven. See [encryption measurements](encryption-validation.md)
-and [native credential build measurements](benchmarks/keyring-build.json).
+The Linux executable with native credential libraries and the embedded read-only
+browser dashboard is **7,642,784 bytes**. The `--no-default-features` build is
+**6,876,928 bytes**, retaining SQLCipher, bundled OpenSSL, the API and browser
+assets while omitting native credential-store dependencies. Embedded assets total
+**8,421 bytes** and are already counted in these executables. The default binary
+increased by **245,408 bytes** from the pre-management native-store build.
+Both exceed the initial 3 MB service allocation.
+
+The 87,812-policy test index is 1,018,122 bytes and the encrypted configuration
+fixture is 12,288 bytes. Default executable + index + configuration total
+**8,673,194 bytes**, excluding credential-store state/runtime, notices,
+any added browser/native-shell runtime, analytics, retained feeds, other state and
+index update overlap. Reserve 200 KiB for the database/journal update budget
+instead of counting only its resting file size. The complete-product target
+remains unproven. See [management build measurements](benchmarks/management-build.json),
+[constrained runtime validation](management-validation.md), and the earlier
+[encryption](encryption-validation.md) and [native credential measurements](benchmarks/keyring-build.json).
 
 The update publisher gates `other bytes + old index + staged index` against the
 strict ceiling using a caller-supplied inventory. See the

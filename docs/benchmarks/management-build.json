@@ -1,0 +1,40 @@
+{
+  "kind": "management-dashboard-build",
+  "source_commit": "da0bb58f5ca4460ea4d008cda5e210679f28edd0",
+  "platform": "Linux x86_64",
+  "date": "2026-11-07",
+  "builds": {
+    "desktop": {
+      "bytes": 7642784,
+      "sha256": "924268ef4f34419c9dd97da9bdc014b9fe674c59056541d83540897210eb3119",
+      "command": "cargo build --release --locked",
+      "scope": "Native credential-store support enabled"
+    },
+    "headless": {
+      "bytes": 6876928,
+      "sha256": "61b089ee6ef94cf71a817269d3ddda7cd0c295273eaf6856410dfa1cbd711b39",
+      "command": "cargo build --release --locked --no-default-features",
+      "scope": "Native credential-store support omitted; API and embedded browser UI still included"
+    }
+  },
+  "embedded_assets": {
+    "app.css": {
+      "bytes": 2612,
+      "sha256": "12a86e616a3fa6cb121d3ff2feb2f3c37cbd4f6619766f0f9a55107e6165c01e"
+    },
+    "app.js": {
+      "bytes": 3746,
+      "sha256": "76dc60b613a26949332092ef8bbffb53756fc268c352951b585a2798e9b3e19a"
+    },
+    "index.html": {
+      "bytes": 2063,
+      "sha256": "ba46b589591f78db8b52b4649399eba3ea3ee9517d2735419394d028a550d247"
+    }
+  },
+  "limits": "Executable sizes include embedded UI and bundled native dependencies. Excludes policy indexes, configuration/journals, credential-store state/runtime, browser/runtime, notices, other state and update overlap; not a complete installation audit.",
+  "embedded_asset_bytes": 8421,
+  "increment_over_previous_default_binary_bytes": 245408,
+  "native_credential_library_increment_bytes": 765856,
+  "test_index_bytes": 1018122,
+  "test_configuration_bytes": 12288
+}

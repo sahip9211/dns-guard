@@ -46,6 +46,9 @@ its rollback journal; see [security scope](security-model.md).
 - Direct matcher measurements, k6 orchestration, cgroup resource sampling and
   separately labeled native-client/transport experiments.
 
+See the [management validation](management-validation.md) for the latest constrained
+DNS/API comparison. Full capacity gates remain unmet.
+
 ## Validation
 
 The Rust suite includes policy, protocol, forwarding, overload and shutdown tests. The Python suite covers report validity,

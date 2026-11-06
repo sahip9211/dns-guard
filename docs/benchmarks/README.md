@@ -12,3 +12,6 @@ remain for context, with their artifact hashes and limitations; use the current
 
 No source blocklist or real-domain query corpus is included here. Re-fetch source
 files and generate local fixtures when reproducing a real-list workload.
+
+The [management comparison](../management-validation.md) measures real API polling
+alongside DNS under fixed cgroup limits, with artifact hashes and scope limitations.
