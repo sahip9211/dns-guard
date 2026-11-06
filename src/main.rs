@@ -8,6 +8,7 @@ const CEILING: u64 = 10_000_000;
 const HELP: &str = "dns-guard — compact DNS filtering prototype
 
   dns-guard compile OUTPUT --other-bytes N --feed FORMAT CATEGORIES INPUT [--feed ...]
+  dns-guard compile OUTPUT --other-bytes N --empty
   dns-guard check INDEX CATEGORIES DOMAIN [DOMAIN ...]
   dns-guard inspect INDEX
   dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
@@ -137,9 +138,8 @@ fn serve_command(args: &[String]) -> CliResult<()> {
         .enable_all()
         .build()?
         .block_on(async move {
-            let rule_count = index.rule_count();
-            let index_bytes = index.as_bytes().len();
-            let server = Server::bind(config, index).await?;
+            let enabled_categories = config.categories;
+            let server = Server::bind(config, index.clone()).await?;
             let stats = server.stats();
             let mut management = management_options
                 .map(|options| {
@@ -147,8 +147,8 @@ fn serve_command(args: &[String]) -> CliResult<()> {
                         options.address,
                         options.token,
                         stats.clone(),
-                        rule_count,
-                        index_bytes,
+                        index.clone(),
+                        enabled_categories,
                     )
                 })
                 .transpose()?;
@@ -231,9 +231,14 @@ fn compile_command(args: &[String]) -> CliResult<()> {
         .ok_or("compile requires an output path, --other-bytes, and --feed")?;
     let mut other_bytes = None;
     let mut feeds = Vec::new();
+    let mut empty = false;
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
+            "--empty" if !empty => {
+                empty = true;
+                i += 1;
+            }
             "--other-bytes" if i + 1 < args.len() && other_bytes.is_none() => {
                 other_bytes = Some(args[i + 1].parse::<u64>()?);
                 i += 2;
@@ -255,8 +260,8 @@ fn compile_command(args: &[String]) -> CliResult<()> {
     }
     let other_bytes =
         other_bytes.ok_or("--other-bytes is required for explicit storage accounting")?;
-    if feeds.is_empty() {
-        return Err("at least one --feed is required".into());
+    if empty != feeds.is_empty() {
+        return Err("choose either --feed inputs or explicit --empty".into());
     }
     if other_bytes >= CEILING {
         return Err("other installed bytes already exhaust the budget".into());
@@ -283,7 +288,11 @@ fn compile_command(args: &[String]) -> CliResult<()> {
             parse_feed(&text, format, enabled, feed_limits).map_err(|e| format!("{input}: {e}"))?,
         );
     }
-    let index = compile(&rules, limits)?;
+    let index = if empty {
+        Index::empty(limits)?
+    } else {
+        compile(&rules, limits)?
+    };
     index.publish(
         Path::new(output),
         Budget {

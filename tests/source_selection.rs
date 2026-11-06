@@ -137,13 +137,39 @@ fn disabling_allow_source_restores_blocking_and_disabled_rules_do_not_consume_bu
         )
         .is_err()
     );
-    // Empty selection needs an explicit service-level allow-all policy, not an
-    // accidental empty artifact that looks like a valid populated snapshot.
+    let empty = compile_sources(
+        &[RuleSource {
+            enabled: false,
+            rules: &blocks,
+        }],
+        Limits {
+            max_rules: 0,
+            ..Limits::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(empty.rule_count(), 0);
+    assert!(
+        !empty
+            .check("shared.test", Category::ALL)
+            .unwrap()
+            .is_blocked()
+    );
+}
+
+#[test]
+fn no_sources_is_valid_but_an_unexpected_empty_enabled_source_fails_closed() {
+    assert_eq!(
+        compile_sources(&[], Limits::default())
+            .unwrap()
+            .rule_count(),
+        0
+    );
     assert!(
         compile_sources(
             &[RuleSource {
-                enabled: false,
-                rules: &blocks
+                enabled: true,
+                rules: &[]
             }],
             Limits::default()
         )

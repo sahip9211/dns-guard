@@ -1,10 +1,13 @@
 //! Optional, bounded, read-only loopback management. HTTP runs on a separate
-//! runtime thread; only immutable policy metadata and atomic DNS counters cross it.
+//! runtime thread; immutable policy data and atomic DNS counters are shared.
 use crate::{
+    Index,
+    domain::Domain,
     keys::ManagementToken,
     server::{Stats, StatsSnapshot},
+    validate_categories,
 };
-use http_body_util::Full;
+use http_body_util::{BodyExt, Full, Limited};
 use hyper::{
     Request, Response, StatusCode,
     body::{Bytes, Incoming},
@@ -13,7 +16,7 @@ use hyper::{
     service::service_fn,
 };
 use hyper_util::rt::TokioIo;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     convert::Infallible,
     io,
@@ -45,8 +48,8 @@ impl Management {
         address: SocketAddr,
         token: ManagementToken,
         stats: Arc<Stats>,
-        rules: usize,
-        index_bytes: usize,
+        index: Arc<Index>,
+        enabled_categories: u32,
     ) -> io::Result<Self> {
         if !address.ip().is_loopback() {
             return Err(io::Error::new(
@@ -54,6 +57,8 @@ impl Management {
                 "management must bind a numeric loopback address",
             ));
         }
+        validate_categories(enabled_categories)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidInput, error))?;
         let listener = TcpListener::bind(address)?;
         listener.set_nonblocking(true)?;
         let address = listener.local_addr()?;
@@ -70,8 +75,8 @@ impl Management {
             bearer: token.expose_bearer(),
             stats,
             started: Instant::now(),
-            rules,
-            index_bytes,
+            index,
+            enabled_categories,
         });
         let (stop, mut stopping) = oneshot::channel();
         let (done, finished) = oneshot::channel();
@@ -101,8 +106,8 @@ impl Management {
                                 let mut http = http1::Builder::new();
                                 http.keep_alive(false).max_headers(32).max_buf_size(8192).max_header_size(8192);
                                 let service = service_fn(move |req| {
-                                    let response = state.respond(req);
-                                    async { Ok::<_, Infallible>(response) }
+                                    let state = state.clone();
+                                    async move { Ok::<_, Infallible>(state.respond(req).await) }
                                 });
                                 let _ = tokio::time::timeout(CONNECTION_TIMEOUT,
                                     http.serve_connection(TokioIo::new(socket), service)).await;
@@ -162,8 +167,8 @@ struct State {
     bearer: Zeroizing<String>,
     stats: Arc<Stats>,
     started: Instant,
-    rules: usize,
-    index_bytes: usize,
+    index: Arc<Index>,
+    enabled_categories: u32,
 }
 
 #[derive(Serialize)]
@@ -178,6 +183,22 @@ struct Status {
 struct Policy {
     rules: usize,
     bytes: usize,
+    enabled_categories: u32,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PolicyRequest {
+    domain: String,
+}
+#[derive(Serialize)]
+struct PolicyResult<'a> {
+    schema_version: u8,
+    domain: &'a str,
+    blocked: bool,
+    blocked_categories: u32,
+    allowed_categories: u32,
+    enforced_categories: u32,
+    enabled_categories: u32,
 }
 
 // Browsers omit the default HTTP port in Host and Origin. Keep the numeric
@@ -206,31 +227,104 @@ impl State {
                 ))
     }
 
-    fn respond(&self, req: Request<Incoming>) -> Response<Body> {
+    async fn respond(&self, req: Request<Incoming>) -> Response<Body> {
         let headers = req.headers();
         // Require the exact numeric origin advertised at startup. No forwarded
         // host trust or CORS exceptions, including for the public login shell.
         if !self.accepts_origin(headers) {
             return error(StatusCode::FORBIDDEN, "origin rejected");
         }
-        if req.method() != hyper::Method::GET {
-            let mut response = error(StatusCode::METHOD_NOT_ALLOWED, "read-only endpoint");
-            response
-                .headers_mut()
-                .insert(header::ALLOW, header::HeaderValue::from_static("GET"));
+        let policy_check = req.uri().path() == "/api/v1/policy/check";
+        let method = if policy_check {
+            hyper::Method::POST
+        } else {
+            hyper::Method::GET
+        };
+        if req.method() != method {
+            let mut response = error(StatusCode::METHOD_NOT_ALLOWED, "method not supported");
+            response.headers_mut().insert(
+                header::ALLOW,
+                header::HeaderValue::from_static(if policy_check { "POST" } else { "GET" }),
+            );
             return response;
         }
         if req.uri().query().is_some()
             || req.uri().authority().is_some()
-            || headers.contains_key(header::TRANSFER_ENCODING)
             || headers.contains_key(header::EXPECT)
-            || (headers.contains_key(header::CONTENT_LENGTH)
-                && single(headers, "content-length") != Some(b"0"))
+            || (!policy_check
+                && (headers.contains_key(header::TRANSFER_ENCODING)
+                    || (headers.contains_key(header::CONTENT_LENGTH)
+                        && single(headers, "content-length") != Some(b"0"))))
         {
             return error(
                 StatusCode::BAD_REQUEST,
-                "bodies and query parameters are not accepted",
+                "unsupported request framing or query parameters",
             );
+        }
+        if policy_check || req.uri().path() == "/api/v1/status" {
+            let supplied =
+                single(headers, "authorization").and_then(|value| value.strip_prefix(b"Bearer "));
+            if !supplied.is_some_and(|value| bool::from(value.ct_eq(self.bearer.as_bytes()))) {
+                let mut response = error(StatusCode::UNAUTHORIZED, "authentication required");
+                response.headers_mut().insert(
+                    header::WWW_AUTHENTICATE,
+                    header::HeaderValue::from_static("Bearer"),
+                );
+                return response;
+            }
+        }
+        if policy_check {
+            if single(headers, "content-type") != Some(b"application/json") {
+                return error(
+                    StatusCode::UNSUPPORTED_MEDIA_TYPE,
+                    "application/json required",
+                );
+            }
+            // Library-enforced limit applies to streamed/chunked bodies too.
+            // The existing whole-connection deadline bounds stalled body reads.
+            use hyper::body::Body as _;
+            if req.body().size_hint().lower() > 512 {
+                return error(
+                    StatusCode::PAYLOAD_TOO_LARGE,
+                    "policy request exceeds 512 bytes",
+                );
+            }
+            let body = match Limited::new(req.into_body(), 512).collect().await {
+                Ok(body) => body.to_bytes(),
+                Err(body_error) if body_error.is::<http_body_util::LengthLimitError>() => {
+                    return error(
+                        StatusCode::PAYLOAD_TOO_LARGE,
+                        "policy request exceeds 512 bytes",
+                    );
+                }
+                Err(_) => return error(StatusCode::BAD_REQUEST, "invalid request body"),
+            };
+            let input: PolicyRequest = match serde_json::from_slice(&body) {
+                Ok(input) => input,
+                Err(_) => return error(StatusCode::BAD_REQUEST, "invalid policy request"),
+            };
+            let domain = match Domain::parse(&input.domain) {
+                Ok(domain) => domain,
+                Err(_) => {
+                    return error(
+                        StatusCode::BAD_REQUEST,
+                        "use a valid ASCII hostname or IDNA A-label",
+                    );
+                }
+            };
+            let decision = match self.index.check(domain.as_str(), self.enabled_categories) {
+                Ok(decision) => decision,
+                Err(_) => return error(StatusCode::INTERNAL_SERVER_ERROR, "policy unavailable"),
+            };
+            return json_response(&PolicyResult {
+                schema_version: 1,
+                domain: domain.as_str(),
+                blocked: decision.is_blocked(),
+                blocked_categories: decision.blocked,
+                allowed_categories: decision.allowed,
+                enforced_categories: decision.enforced,
+                enabled_categories: self.enabled_categories,
+            });
         }
         match req.uri().path() {
             "/" => response(
@@ -249,33 +343,27 @@ impl State {
                 Bytes::from_static(include_bytes!("../web/app.css")),
             ),
             "/api/v1/status" => {
-                let supplied = single(headers, "authorization")
-                    .and_then(|value| value.strip_prefix(b"Bearer "));
-                if !supplied.is_some_and(|value| bool::from(value.ct_eq(self.bearer.as_bytes()))) {
-                    let mut response = error(StatusCode::UNAUTHORIZED, "authentication required");
-                    response.headers_mut().insert(
-                        header::WWW_AUTHENTICATE,
-                        header::HeaderValue::from_static("Bearer"),
-                    );
-                    return response;
-                }
                 let status = Status {
                     schema_version: 1,
                     version: env!("CARGO_PKG_VERSION"),
                     uptime_seconds: self.started.elapsed().as_secs(),
                     policy: Policy {
-                        rules: self.rules,
-                        bytes: self.index_bytes,
+                        rules: self.index.rule_count(),
+                        bytes: self.index.as_bytes().len(),
+                        enabled_categories: self.enabled_categories,
                     },
                     dns: self.stats.snapshot(),
                 };
-                match serde_json::to_vec(&status) {
-                    Ok(bytes) => response(StatusCode::OK, "application/json", Bytes::from(bytes)),
-                    Err(_) => error(StatusCode::INTERNAL_SERVER_ERROR, "status unavailable"),
-                }
+                json_response(&status)
             }
             _ => error(StatusCode::NOT_FOUND, "not found"),
         }
+    }
+}
+fn json_response(value: &impl Serialize) -> Response<Body> {
+    match serde_json::to_vec(value) {
+        Ok(bytes) => response(StatusCode::OK, "application/json", Bytes::from(bytes)),
+        Err(_) => error(StatusCode::INTERNAL_SERVER_ERROR, "response unavailable"),
     }
 }
 fn single<'a>(headers: &'a header::HeaderMap, name: &str) -> Option<&'a [u8]> {
@@ -318,8 +406,8 @@ mod tests {
                 bearer: Zeroizing::new(String::new()),
                 stats: Arc::new(Stats::default()),
                 started: Instant::now(),
-                rules: 0,
-                index_bytes: 0,
+                index: Arc::new(Index::empty(crate::Limits::default()).unwrap()),
+                enabled_categories: crate::Category::ALL,
             };
             for allowed_host in [address, host] {
                 let mut headers = header::HeaderMap::new();

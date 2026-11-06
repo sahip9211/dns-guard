@@ -6,7 +6,7 @@ background updater. A read-only browser dashboard is implemented.
 
 ## Implemented
 
-- Optional embedded dashboard and versioned aggregate status API, using Hyper,
+- Optional embedded dashboard, versioned aggregate status and active hostname-policy APIs, using Hyper,
   Serde and a separate bounded runtime thread. Independent management tokens use
   native credential libraries or explicit private credential files. See
   [management API](management-api.md) for the exact security and resource scope.
@@ -39,8 +39,9 @@ its rollback journal; see [security scope](security-model.md).
 - Immutable FST snapshots: v1 for one policy kind, packed v2 for mixed kinds.
 - Compatibility reading v1 snapshots; version, count, record and checksum checks.
 - `compile_sources` rebuilds the enabled-source union without deleting other
-  sources' overlapping contributions. An empty compilation is rejected; the
-  future service must explicitly handle an all-disabled policy.
+  sources' overlapping contributions. No enabled sources produces a 71-byte empty
+  snapshot; an empty enabled selection still fails. The CLI requires explicit
+  `compile --empty` to disable all rules. See [empty policy semantics](empty-policy.md).
 - Budget-aware staged publication and a command-line compiler/checker.
 - On-demand HTTPS source fetching into a bounded, ignored development cache.
 - Direct matcher measurements, k6 orchestration, cgroup resource sampling and

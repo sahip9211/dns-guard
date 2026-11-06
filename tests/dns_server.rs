@@ -743,3 +743,42 @@ fn large_cached_answer_truncates_udp_but_still_serves_full_tcp_reply() {
         task.await.unwrap().unwrap();
     });
 }
+
+#[test]
+fn explicit_empty_policy_forwards_queries_and_preserves_transport_validation() {
+    run(async {
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let mut cfg = config(upstream.local_addr().unwrap());
+        cfg.listen = "127.0.0.1:0".parse().unwrap();
+        let server = Server::bind(cfg, Arc::new(Index::empty(Limits::default()).unwrap()))
+            .await
+            .unwrap();
+        let address = server.local_addr().unwrap();
+        let stats = server.stats();
+        let (stop, stopped) = oneshot::channel();
+        let task = tokio::spawn(server.run(async {
+            let _ = stopped.await;
+        }));
+        let upstream_task = tokio::spawn(async move {
+            let mut data = [0; 512];
+            let (n, peer) = timeout(Duration::from_secs(2), upstream.recv_from(&mut data))
+                .await
+                .unwrap()
+                .unwrap();
+            let request = Message::from_vec(&data[..n]).unwrap();
+            upstream
+                .send_to(&answer(&request).to_vec().unwrap(), peer)
+                .await
+                .unwrap();
+        });
+        let response = udp(address, &query("ads.example")).await;
+        assert_eq!(response.metadata.response_code, ResponseCode::NoError);
+        assert_eq!(response.answers.len(), 1);
+        assert!(!response.metadata.authentic_data);
+        assert_eq!(stats.snapshot().blocked, 0);
+        assert_eq!(stats.snapshot().forwarded, 1);
+        upstream_task.await.unwrap();
+        stop.send(()).unwrap();
+        task.await.unwrap().unwrap();
+    });
+}

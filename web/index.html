@@ -26,6 +26,16 @@
       <div class="toolbar"><p id="service-meta"></p><button id="disconnect" type="button" class="secondary">Disconnect</button></div>
       <div id="metrics" class="grid"></div>
       <p class="muted">Counters are cumulative since service startup. Updates every two seconds while this tab is visible. Cache bytes measure cache accounting, not total process memory.</p>
+      <section id="policy-checker" aria-labelledby="policy-title">
+        <h2 id="policy-title">Check a hostname</h2>
+        <p id="policy-mode" class="muted"></p>
+        <form id="policy-form">
+          <label for="hostname">Hostname</label>
+          <div class="input-row"><input id="hostname" type="text" required maxlength="254" placeholder="ads.example" autocomplete="off" spellcheck="false" aria-describedby="policy-help"><button id="policy-submit" type="submit">Check hostname</button></div>
+        </form>
+        <p id="policy-result" role="status" aria-live="polite"></p>
+        <p id="policy-help" class="muted">Checks this hostname against the active rules, without sending a DNS query. Responses pointing to other blocked hostnames may still be blocked. Checks are not saved.</p>
+      </section>
       <details><summary>All DNS counters</summary><dl id="details"></dl></details>
       <p class="muted">This first dashboard is read-only. Device policies, source management, latency charts and resource monitoring are still being built.</p>
     </section>

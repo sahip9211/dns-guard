@@ -1,4 +1,5 @@
 use dns_guard::{
+    Action, Category, Index, Limits, Rule, Scope, compile,
     keys::{DataKey, ManagementToken},
     management::Management,
     server::Stats,
@@ -10,6 +11,32 @@ use std::{
     time::{Duration, Instant},
 };
 
+fn policy() -> Arc<Index> {
+    Arc::new(
+        compile(
+            &[
+                Rule::new("ads.example", Scope::Domain, Action::Block, Category::ADS).unwrap(),
+                Rule::new(
+                    "safe.ads.example",
+                    Scope::Domain,
+                    Action::Allow,
+                    Category::ADS,
+                )
+                .unwrap(),
+                Rule::new(
+                    "adult.example",
+                    Scope::Domain,
+                    Action::Enforce,
+                    Category::ADULT,
+                )
+                .unwrap(),
+            ],
+            Limits::default(),
+        )
+        .unwrap(),
+    )
+}
+
 fn start() -> (Management, String) {
     let token = ManagementToken::generate().unwrap();
     let bearer = token.expose_bearer().to_string();
@@ -17,8 +44,8 @@ fn start() -> (Management, String) {
         "127.0.0.1:0".parse().unwrap(),
         token,
         Arc::new(Stats::default()),
-        17,
-        1234,
+        policy(),
+        Category::ALL,
     )
     .unwrap();
     (server, bearer)
@@ -64,8 +91,8 @@ fn status_requires_independent_token_and_returns_versioned_real_counters() {
     let data: serde_json::Value =
         serde_json::from_str(reply.split_once("\r\n\r\n").unwrap().1).unwrap();
     assert_eq!(data["schema_version"], 1);
-    assert_eq!(data["policy"]["rules"], 17);
-    assert_eq!(data["policy"]["bytes"], 1234);
+    assert_eq!(data["policy"]["rules"], 3);
+    assert_eq!(data["policy"]["bytes"], policy().as_bytes().len());
     assert_eq!(data["dns"]["received"], 0);
     assert_eq!(data["dns"].as_object().unwrap().len(), 15);
     assert!(!reply.contains(&token));
@@ -152,20 +179,27 @@ fn non_loopback_bind_is_rejected_and_shutdown_closes_slow_clients() {
                 address.parse().unwrap(),
                 ManagementToken::generate().unwrap(),
                 Arc::new(Stats::default()),
-                0,
-                0
+                policy(),
+                Category::ALL
             )
             .is_err()
         );
     }
     let (server, _) = start();
     let mut slow = TcpStream::connect(server.local_addr()).unwrap();
+    slow.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
     slow.write_all(b"GET / HTTP/1.1\r\n").unwrap();
     let started = Instant::now();
     drop(server);
     assert!(started.elapsed() < Duration::from_secs(2));
-    slow.set_read_timeout(Some(Duration::from_secs(1))).unwrap();
-    assert!(matches!(slow.read(&mut [0]), Ok(0) | Err(_)));
+    let read = slow.read(&mut [0]);
+    assert!(
+        matches!(read, Ok(0))
+            || read.is_err_and(|e| matches!(
+                e.kind(),
+                std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted
+            ))
+    );
 }
 
 #[test]
@@ -225,8 +259,8 @@ fn ipv6_numeric_loopback_supports_the_same_api() {
         "[::1]:0".parse().unwrap(),
         token,
         Arc::new(Stats::default()),
-        0,
-        0,
+        policy(),
+        Category::ALL,
     )
     .unwrap();
     let reply = get(
@@ -257,4 +291,121 @@ fn excess_connections_are_closed_while_existing_clients_are_slow() {
             || result.is_err_and(|e| e.kind() == std::io::ErrorKind::ConnectionReset)
     );
     drop(slow);
+}
+
+fn check_policy(addr: SocketAddr, token: &str, body: &str) -> String {
+    request(
+        addr,
+        &format!(
+            "POST /api/v1/policy/check HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        ),
+    )
+}
+
+#[test]
+fn policy_checker_uses_active_categories_and_exact_allow_enforce_semantics() {
+    let (server, token) = start();
+    for (domain, blocked, allowed, enforced) in [
+        ("X.ADS.EXAMPLE.", 1, 0, 0),
+        ("safe.ads.example", 0, 1, 0),
+        ("adult.example", 2, 0, 2),
+        ("notads.example", 0, 0, 0),
+    ] {
+        let reply = check_policy(
+            server.local_addr(),
+            &token,
+            &format!(r#"{{"domain":"{domain}"}}"#),
+        );
+        assert!(reply.starts_with("HTTP/1.1 200"), "{reply}");
+        let data: serde_json::Value =
+            serde_json::from_str(reply.split_once("\r\n\r\n").unwrap().1).unwrap();
+        assert_eq!(data["schema_version"], 1);
+        assert_eq!(
+            data["domain"],
+            domain.trim_end_matches('.').to_ascii_lowercase()
+        );
+        assert_eq!(data["blocked_categories"], blocked);
+        assert_eq!(data["allowed_categories"], allowed);
+        assert_eq!(data["enforced_categories"], enforced);
+        assert_eq!(data["blocked"], blocked != 0);
+    }
+    let key = ManagementToken::generate().unwrap();
+    let bearer = key.expose_bearer();
+    let restricted = Management::start(
+        "127.0.0.1:0".parse().unwrap(),
+        key,
+        Arc::new(Stats::default()),
+        policy(),
+        Category::ADS,
+    )
+    .unwrap();
+    let reply = check_policy(
+        restricted.local_addr(),
+        &bearer,
+        r#"{"domain":"adult.example"}"#,
+    );
+    let data: serde_json::Value =
+        serde_json::from_str(reply.split_once("\r\n\r\n").unwrap().1).unwrap();
+    assert_eq!(data["blocked"], false);
+    assert_eq!(data["enabled_categories"], Category::ADS);
+    let stats = get(
+        server.local_addr(),
+        "/api/v1/status",
+        &format!("Authorization: Bearer {token}\r\n"),
+    );
+    let data: serde_json::Value =
+        serde_json::from_str(stats.split_once("\r\n\r\n").unwrap().1).unwrap();
+    assert_eq!(
+        data["dns"]["received"], 0,
+        "policy checks are not DNS traffic"
+    );
+}
+
+#[test]
+fn policy_checker_rejects_unauthorized_invalid_and_oversized_requests() {
+    let (server, token) = start();
+    let addr = server.local_addr();
+    assert!(
+        check_policy(addr, "invalid", r#"{"domain":"ads.example"}"#).starts_with("HTTP/1.1 401")
+    );
+    assert!(get(addr, "/api/v1/policy/check", "").starts_with("HTTP/1.1 405"));
+    for body in [
+        r#"{"domain":"bad..name"}"#,
+        r#"{"domain":"127.0.0.1"}"#,
+        r#"{"domain":"a.test","categories":0}"#,
+        r#"{"domain":"a.test","domain":"b.test"}"#,
+        r#"{}"#,
+        r#"null"#,
+        r#"{"domain":"a.test"} trailing"#,
+    ] {
+        assert!(
+            check_policy(addr, &token, body).starts_with("HTTP/1.1 400"),
+            "{body}"
+        );
+    }
+    assert!(check_policy(addr, &token, &" ".repeat(513)).starts_with("HTTP/1.1 413"));
+    let response = request(
+        addr,
+        &format!(
+            "POST /api/v1/policy/check HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {token}\r\nContent-Type: text/plain\r\nContent-Length: 0\r\n\r\n"
+        ),
+    );
+    assert!(response.starts_with("HTTP/1.1 415"));
+    let response = request(
+        addr,
+        &format!(
+            "POST /api/v1/policy/check HTTP/1.1\r\nHost: {addr}\r\nOrigin: https://evil.example\r\nAuthorization: Bearer {token}\r\nContent-Length: 0\r\n\r\n"
+        ),
+    );
+    assert!(response.starts_with("HTTP/1.1 403"));
+    // Length enforcement must also work without a Content-Length header.
+    let body = "a".repeat(513);
+    let response = request(
+        addr,
+        &format!(
+            "POST /api/v1/policy/check HTTP/1.1\r\nHost: {addr}\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nTransfer-Encoding: chunked\r\n\r\n201\r\n{body}\r\n0\r\n\r\n"
+        ),
+    );
+    assert!(response.starts_with("HTTP/1.1 413"));
 }

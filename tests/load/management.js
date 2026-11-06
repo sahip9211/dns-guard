@@ -7,6 +7,8 @@ const errors = new Rate('status_error_rate');
 const base = __ENV.BASE_URL || 'http://127.0.0.1:8788';
 const token = __ENV.MANAGEMENT_TOKEN;
 const rate = Number(__ENV.RATE || 20);
+const policyDomain = __ENV.POLICY_DOMAIN;
+const expectedBlocked = __ENV.EXPECTED_BLOCKED === 'true';
 export const options = {
   scenarios: { management: { executor:'constant-arrival-rate', rate, timeUnit:'1s', duration:__ENV.DURATION || '60s', preAllocatedVUs:4, maxVUs:4 } },
   summaryTrendStats: ['avg','med','p(95)','p(99)','max'],
@@ -15,16 +17,19 @@ export const options = {
 };
 export function setup() {
   if (!token || !/^[0-9a-f]{64}$/.test(token)) throw new Error('explicit management token required');
+  if (policyDomain && !['true','false'].includes(__ENV.EXPECTED_BLOCKED)) throw new Error('explicit EXPECTED_BLOCKED=true|false required for policy checks');
   if (!(rate >= 1 && rate <= 48)) throw new Error('management test rate must be 1..48');
 }
 export default function () {
-  const response = http.get(`${base}/api/v1/status`, { headers:{Authorization:`Bearer ${token}`}, timeout:'2s', tags:{name:'management-status'} });
+  const response = policyDomain
+    ? http.post(`${base}/api/v1/policy/check`, JSON.stringify({domain:policyDomain}), { headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'}, timeout:'2s', tags:{name:'management-policy'} })
+    : http.get(`${base}/api/v1/status`, { headers:{Authorization:`Bearer ${token}`}, timeout:'2s', tags:{name:'management-status'} });
   let valid = false;
-  try { valid = response.status === 200 && response.json('schema_version') === 1 && Number.isFinite(response.json('dns.received')); } catch (_) {}
-  check(response, {'authenticated versioned counters': () => valid});
+  try { valid = response.status === 200 && response.json('schema_version') === 1 && (policyDomain ? response.json('blocked') === expectedBlocked : Number.isFinite(response.json('dns.received'))); } catch (_) {}
+  check(response, {'authenticated versioned response': () => valid});
   errors.add(!valid);
 }
 export function handleSummary(data) {
   const output = __ENV.SUMMARY_PATH || 'results/management-k6.json';
-  return { [output]: JSON.stringify({kind:'k6-real-management-api', configured_rate:rate, duration:__ENV.DURATION || '60s', metrics:data.metrics}, null, 2) + '\n' };
+  return { [output]: JSON.stringify({kind:'k6-real-management-api', workload:policyDomain ? 'policy-check' : 'status', configured_rate:rate, duration:__ENV.DURATION || '60s', metrics:data.metrics}, null, 2) + '\n' };
 }

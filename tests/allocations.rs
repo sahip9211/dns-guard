@@ -53,6 +53,7 @@ fn successful_hot_path_never_allocates() {
         Limits::default(),
     )
     .unwrap();
+    let empty = dns_guard::Index::empty(Limits::default()).unwrap();
     let request =
         wire::parse_request(b"GET /check/127/example.com HTTP/1.1\r\nHost: local\r\n\r\n")
             .unwrap()
@@ -70,7 +71,7 @@ fn successful_hot_path_never_allocates() {
             "clean.test",
             "badexample.com",
         ] {
-            for index in [&index, &packed] {
+            for index in [&index, &packed, &empty] {
                 wire::encode_reply(index, &request, &mut reply).unwrap();
                 std::hint::black_box(
                     index

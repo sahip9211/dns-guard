@@ -52,7 +52,7 @@ Automatic expiry, live rotation and multi-user access remain unfinished.
 
 `GET /api/v1/status` requires exactly one `Authorization: Bearer TOKEN` header.
 It returns `schema_version: 1`, application `version`, `uptime_seconds` since the
-management runtime started, `policy: {rules, bytes}`, and a `dns` object:
+management runtime started, `policy: {rules, bytes, enabled_categories}`, and a `dns` object:
 
 | Fields | Meaning |
 | --- | --- |
@@ -67,6 +67,30 @@ atomic snapshots, not transactions. They reset on restart. JSON integers are
 unsigned; JavaScript display loses integer precision above 2^53−1. No percentile,
 CPU utilization, traffic-byte or per-device metrics are invented from these totals.
 
+`POST /api/v1/policy/check` uses the same independent read-only bearer token and
+origin checks. Send `Content-Type: application/json` and a body such as
+`{"domain":"ads.example"}`. This evaluates the shared active index and the service's
+configured categories, without upstream requests, SQL, index copies or DNS-counter
+increments. It is a read-only operation; POST keeps the hostname out of URLs and
+browser navigation history. No domain history is retained by the service.
+
+The JSON response contains `schema_version: 1`, normalized `domain`, `blocked`
+(boolean), `blocked_categories`, `allowed_categories`, `enforced_categories` and
+`enabled_categories` (category bitmasks: ads=1, adult=2, malware=4, tracking=8,
+phishing=16, gambling=32, social=64).
+This checks the question hostname only: upstream answers/CNAME targets, client
+ACLs and transport errors are not evaluated. Full source/rule explanations are
+still pending. Unicode input requires an IDNA A-label.
+
+Bodies are limited to **512 bytes**, including chunked transfer, using
+`http-body-util::Limited`. Authentication occurs before reading the body. Unknown
+or duplicate JSON fields, invalid hostnames and malformed JSON return 400;
+unsupported content type returns 415 and oversized bodies return 413. Stalled
+body reads are covered by the existing whole-connection deadline. No other route
+accepts request bodies. Method mismatches return 405 with an appropriate Allow
+header. The dashboard cancels checks on hide/disconnect and clears input/results
+on disconnect; results are rendered as text rather than HTML.
+
 `GET /`, `/app.js` and `/app.css` serve the public login shell with no embedded
 credentials. All responses from the application handler use `Cache-Control:
 no-store`, a restrictive CSP, frame denial and MIME sniffing protection. Hyper's
@@ -75,16 +99,17 @@ parser-level rejection responses may be generated before that handler.
 Numeric Host must match the actual bound address and port. An Origin, if supplied,
 must match that origin exactly; Fetch Metadata permits only same-origin or direct
 navigation (`none`). Duplicate authorization/origin headers, cross-origin requests,
-query parameters, request bodies, transfer encoding and non-GET methods are rejected.
+query parameters and unsupported methods are rejected. Only the bounded policy
+check endpoint accepts a JSON request body; other routes reject bodies and transfer encoding.
 No CORS or forwarded-host trust is enabled. Unsupported paths return 404.
 A secret in a URL is never accepted. These controls protect browser access; they
 are not isolation from an administrator or another process with the same OS identity.
 Loopback HTTP has no TLS; this milestone does not support remote proxy exposure.
 
-The three embedded assets total **8,421 bytes uncompressed** (HTML 2,063;
-JavaScript 3,746; CSS 2,612). They are compiled into the executable and must not
-be counted again as separately installed assets. Full installed size accounting,
-including indexes and update overlap, is still required.
+The assets are compiled into the executable and must not be counted again as
+separately installed files. See [current measurements](policy-validation.md) for
+asset/build sizes. Full installed size accounting still includes indexes,
+credential runtimes and update overlap.
 
 ## Bounded work and libraries
 
@@ -93,8 +118,9 @@ JSON to Serde, and fixed-length bearer comparison to
 [subtle](https://docs.rs/subtle/2.6.1/subtle/trait.ConstantTimeEq.html).
 No HTTP parser, encryption primitive or native vault implementation is hand-written.
 
-Management runs on a separate single-thread Tokio runtime, sharing only atomic
-counters with DNS. It opens no database and scans no policy entries. Limits:
+Management runs on a separate single-thread Tokio runtime, sharing atomic
+counters and the same immutable index with DNS. It opens no database, duplicates
+no index and uses exact FST lookups rather than scanning rules. Limits:
 
 - 8 accepted active HTTP connections, including slow clients.
 - 8 KiB parser buffer/header limit and 32 headers per request.
@@ -106,7 +132,8 @@ counters with DNS. It opens no database and scans no policy entries. Limits:
 - Shutdown cancels and drains active HTTP tasks. Unexpected management thread exit
   stops the DNS supervisor rather than leaving a partially failed combined process.
 
-The browser polls every two seconds, permits one request at a time, times it out,
+The browser polls every two seconds, permits one status request and one explicit
+policy check at a time, times them out,
 pauses when hidden and labels stale values on disconnection. Tokens stay in tab
 memory; no cookies, localStorage or sessionStorage. JavaScript/HTTP buffer copies
 are not guaranteed to be wiped from memory. Native/desktop process isolation,
@@ -137,3 +164,6 @@ headless browser tests; all three OS jobs run the HTTP/CLI and native-store test
 `RATE` (default 20/sec), `DURATION` and `SUMMARY_PATH`. Do not enable HTTP debug
 logging with real credentials. The test includes p99, rate, errors and dropped
 arrivals. This small management workload is not a DNS capacity benchmark.
+
+For k6 policy checks, also set `POLICY_DOMAIN` and an explicit
+`EXPECTED_BLOCKED=true` or `false`. Without these, the workload remains status-only.

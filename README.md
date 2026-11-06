@@ -12,7 +12,7 @@ or throughput goals.
 
 - UDP/TCP DNS filtering, upstream TCP fallback, client network allowlists and bounded concurrency.
 - Bounded positive/negative response caching with TTL aging, eviction and counters.
-- Embedded browser dashboard with authenticated aggregate counters, native-store credentials and bounded HTTP work.
+- Embedded browser dashboard with authenticated counters and active-policy hostname checks, native-store credentials and bounded HTTP work.
 - Encrypted SQLCipher settings with explicit per-instance keys, revision checks and interrupted-write recovery; no SQL on the DNS path.
 - Exact hostname and subdomain matching with compressed immutable FST indexes.
 - Category-scoped block, allow and enforced-block policies.
@@ -91,6 +91,17 @@ held in the tab's memory and distinct from the database encryption key. The API
 is off by default and accepts only numeric loopback binds. See
 [management API](docs/management-api.md) for headless key files, encrypted
 configuration, limits, rotation and headless tests.
+
+To deliberately start with all filtering rules disabled, compile an explicit
+empty snapshot (71 bytes); normal empty feed imports remain errors:
+
+```sh
+./target/release/dns-guard compile .cache/empty.dngi --other-bytes 1000000 --empty
+```
+
+Serve that index or set it in saved configuration and restart. The dashboard
+shows that no rules are selected. This does not bypass DNS validation, client
+access controls or upstream errors. See [empty policies](docs/empty-policy.md).
 
 ## Fetch blocklists
 

@@ -62,7 +62,7 @@ No completed component substitutes for the whole-product size/performance gates.
 - [x] FILTER-05 — Rebuild selected-source unions without deleting other sources' overlapping contributions.
 - [x] FILTER-06 — Budget and atomically publish local snapshots, counting old/staged index overlap.
 - [ ] FILTER-07 — Activate snapshots without stopping DNS; retain the last valid generation on failure and invalidate dependent cache data.
-- [ ] FILTER-08 — Support all-sources-disabled operation without inventing a blocking rule or requiring a nonempty compiler input.
+- [x] FILTER-08 — Support all-sources-disabled operation with an explicit 71-byte empty snapshot, without inventing a blocking rule; empty enabled imports still fail closed.
 - [ ] FILTER-09 — Explain matches with source, category, rule, revision, profile, schedule and overrides.
 - [ ] FILTER-10 — Add custom rules, expiring exceptions, previews and undo with audit records.
 - [ ] FILTER-11 — Add memory-bounded external sorting/merging for large source compilation.
@@ -89,7 +89,7 @@ No completed component substitutes for the whole-product size/performance gates.
 
 - [x] CONFIG-01 — Add schema-v1 bootstrap migration, validation and defaults; recover interrupted transactions and preserve corrupt/unsupported files for explicit restoration.
 - [x] CONFIG-02 — Implement SQLite configuration storage with bounded database pages, a small cache target, no WAL and durable transactional changes; close it before DNS starts.
-- [x] CONFIG-11 — Serve a bounded read-only v1 status API on an optional separate loopback runtime, with independent bearer credentials, strict origin/Host checks and shutdown supervision.
+- [x] CONFIG-11 — Serve bounded read-only v1 status and hostname-policy APIs on an optional separate loopback runtime, with independent bearer credentials, strict origin/Host checks and shutdown supervision.
 - [ ] CONFIG-03 — Define versioned API schemas shared by desktop, web and CLI; validate all mutations before activation.
 - [ ] CONFIG-04 — Implement administrator bootstrap, strong credential storage, session/token expiry and revocation; no default password.
 - [ ] CONFIG-05 — Serve management on loopback by default; explicitly configure remote HTTPS and trust.
@@ -142,7 +142,7 @@ No completed component substitutes for the whole-product size/performance gates.
 - [x] WEB-01 — Build embedded local HTML/CSS/JavaScript assets with no CDN dependencies or runtime Node.js requirement; measure final asset sizes.
 - [ ] WEB-02 — Implement first-run setup for service mode, occupied ports, upstreams, source selection, admin credentials and a real DNS check.
 - [ ] WEB-03 — Complete overview charts and CPU/RAM/latency counters; real aggregate DNS/cache cards are implemented.
-- [ ] WEB-04 — Build query explorer/detail view and domain-policy explanation/testing tools.
+- [ ] WEB-04 — Complete query explorer/detail and source/rule explanations; authenticated checks against active hostname policy and category outcomes are implemented.
 - [ ] WEB-05 — Build source manager with freshness, modes, categories, storage, manual refresh and update errors.
 - [ ] WEB-06 — Build devices/groups/profiles, parental schedules, custom rules and exception/undo flows.
 - [ ] WEB-07 — Build upstream, security, logging, backup/restore, service status and diagnostics settings.

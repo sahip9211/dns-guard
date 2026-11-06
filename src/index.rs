@@ -35,6 +35,11 @@ struct Jump {
 }
 
 impl Index {
+    /// Explicit all-filters-disabled snapshot. Ordinary empty imports still fail.
+    pub fn empty(limits: Limits) -> Result<Self> {
+        compile_iter(std::iter::empty(), 0, limits)
+    }
+
     pub fn from_bytes(bytes: Vec<u8>, max_bytes: usize) -> Result<Self> {
         if bytes.len() > max_bytes || bytes.len() < HEADER + 36 {
             return Err(Error::new("invalid snapshot size"));
@@ -50,16 +55,22 @@ impl Index {
         } else {
             count
         };
-        if length != (bytes.len() - HEADER) as u64 || count == 0 {
+        if length != (bytes.len() - HEADER) as u64 {
             return Err(Error::new("invalid snapshot header"));
         }
         let data = &bytes[HEADER..];
         // Pin the checksum-bearing FST format and validate its footer before its
         // constructor. This also avoids overflow in third-party root checks.
+        // An intentional empty snapshot must be exactly the library's canonical
+        // empty v1 map, not a populated/corrupt snapshot relabeled as empty.
+        let empty = count == 0;
+        if empty && (packed || data != MapBuilder::memory().into_inner()?.as_slice()) {
+            return Err(Error::new("invalid empty policy snapshot"));
+        }
         let root = read_u64(&data[data.len() - 12..data.len() - 4]);
         if read_u64(&data[..8]) != 3
             || read_u64(&data[8..16]) != 0
-            || root.checked_add(21) != Some(data.len() as u64)
+            || (!empty && root.checked_add(21) != Some(data.len() as u64))
             || read_u64(&data[data.len() - 20..data.len() - 12]) != key_count
         {
             return Err(Error::new("invalid FST header or footer"));
@@ -187,7 +198,7 @@ impl Index {
     }
 
     fn check_canonical(&self, domain: &[u8], enabled: u32) -> Result<Decision> {
-        if enabled == 0 {
+        if enabled == 0 || self.logical_count == 0 {
             return Ok(Decision::default());
         }
         if self.packed {
@@ -384,12 +395,18 @@ fn build_jumps(map: &Map<Snapshot>, (address, initial): (usize, u64)) -> Option<
 }
 
 pub fn compile(rules: &[Rule], limits: Limits) -> Result<Index> {
+    if rules.is_empty() {
+        return Err(Error::new(
+            "empty rule import; use an explicit empty policy",
+        ));
+    }
     compile_iter(rules.iter(), rules.len(), limits)
 }
 
 /// Build only selected sources, preserving all enabled contributions to shared
 /// hostnames. Does not mutate an active index or retain disabled-source payloads.
-/// An empty selection is rejected, like `compile(&[], ...)`.
+/// No enabled sources produces an explicit empty policy; an enabled selection
+/// containing no rules is rejected to avoid treating failed imports as disablement.
 pub fn compile_sources(sources: &[crate::RuleSource<'_>], limits: Limits) -> Result<Index> {
     let count = sources
         .iter()
@@ -402,6 +419,9 @@ pub fn compile_sources(sources: &[crate::RuleSource<'_>], limits: Limits) -> Res
         .iter()
         .filter(|source| source.enabled)
         .flat_map(|source| source.rules.iter());
+    if count == 0 && sources.iter().any(|source| source.enabled) {
+        return Err(Error::new("enabled sources contain no rules"));
+    }
     compile_iter(rules, count, limits)
 }
 
@@ -410,8 +430,8 @@ fn compile_iter<'a>(
     count: usize,
     limits: Limits,
 ) -> Result<Index> {
-    if count == 0 || count > limits.max_rules {
-        return Err(Error::new("empty rule set or rule count limit exceeded"));
+    if count > limits.max_rules {
+        return Err(Error::new("rule count limit exceeded"));
     }
     if limits.max_index_bytes < HEADER + 36 {
         return Err(Error::new("index byte limit too small"));
