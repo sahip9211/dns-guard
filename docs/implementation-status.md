@@ -1,10 +1,14 @@
 # Implementation status
 
 DNS Guard is a DNS filtering prototype with UDP/TCP forwarding. It does not yet
-provide caching, desktop/web administration, persistent analytics or a background
+provide desktop/web administration, persistent analytics or a background
 updater.
 
 ## Implemented
+
+- Four-way bounded DNS response cache with exact request keys, positive/SOA-bounded
+  negative responses, TTL aging, dual-clock expiry and cache counters. See
+  [cache scope](dns-cache.md) for bypassed protocol variants and resource accounting.
 
 - Bounded UDP/TCP DNS service with client CIDR allowlists, category filtering,
   CNAME target checks, upstream reply correlation, deadlines and TCP fallback.
@@ -32,9 +36,10 @@ The native diagnostic client has Go unit tests. Rust formatting and Clippy are
 required. CI runs Rust checks on Linux, Windows and macOS; local results alone do
 not establish qualification on all three systems.
 
-The successful lookup path and fixed-buffer benchmark response formatter do not
-allocate. HTTP parsing, connection state, compilation and feed downloads have
-separate memory costs. Development generators are outside the server resource cap.
+Policy matching and the fixed-buffer benchmark response formatter do not
+allocate. DNS parsing, cached response copies, HTTP connections, compilation and
+feed downloads have separate memory costs. A short cache mutex protects bounded
+memory operations and is never held across DNS I/O. Development generators are outside the server resource cap.
 
 ## Performance limits
 
@@ -54,8 +59,9 @@ See [DNS service](dns-service.md), [packed-policy measurements](packed-policy-op
 
 ## Remaining work
 
-Encrypted DNS, upstream pooling/failover, TTL/policy-aware caching, profile identity
+Encrypted DNS, upstream pooling/failover, cache coalescing and generation
+invalidation, profile identity
 and authorization, source refresh scheduling, live snapshot activation, disabled
 payload cleanup, analytics persistence, desktop/web UI, and release packaging.
 The complete installed footprint below 10 MB is a design target, not a validated
-full-product result. [Roadmap](../goal.md), [size budget](size-budget.md).
+full-product result. [Task checklist](../task.md), [roadmap](../goal.md), [size budget](size-budget.md).

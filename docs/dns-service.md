@@ -42,7 +42,8 @@ There is one global category mask (`--categories`), not per-device profiles yet.
 ## Processing and resource bounds
 
 - The CLI runs one Tokio event-loop thread. Idle sockets do not occupy OS threads.
-- Default limits: 64 in-flight queries, 32 TCP clients, 4,096-byte query messages,
+- Default limits: 64 in-flight queries, 32 TCP clients, 256 KiB cache-owned storage,
+  4,096-byte query messages,
   1,232-byte advertised UDP payload, and a two-second upstream deadline.
 - UDP overload drops the new datagram and increments `overloaded`. TCP overload
   closes the connection. There is no unbounded application request queue.
@@ -84,7 +85,7 @@ clear AD/AA, advertise recursion, and include a fresh OPT when appropriate.
 
 Forwarded replies retain original record bytes and TTLs, including unknown RDATA.
 Only the client ID is restored and AD is cleared. Plain upstream DNS is not
-independently authenticated. DNSSEC validation, encrypted transports, caching,
+independently authenticated. DNSSEC validation, encrypted transports, signed/contextual caching,
 DNAME/HTTPS alias-target policy, upstream connection pooling, retries/failover,
 rebinding protection and per-client rate limits remain planned.
 
@@ -103,6 +104,9 @@ and connection-limit events occur before a query is read. `inflight` and
 `peak_inflight` track the bounded active-query slots.
 
 Tests use local mock upstreams; they do not rely on public DNS or downloaded feeds.
+Cache hits/misses and resident entries/bytes/evictions are also exposed. The
+[cache guide](dns-cache.md) defines eligibility, aging and byte accounting.
+
 The [UDP diagnostic](../tools/README.md#dns-diagnostic) measures blocked-query latency
 and resources separately from the existing HTTP/k6 results. None of those earlier
 HTTP results establish capacity for this new DNS service.

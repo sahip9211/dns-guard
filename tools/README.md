@@ -12,7 +12,7 @@ and `results/`, both ignored by Git.
 | `python3 -m tools.bench.compare_matchers` | Alternate direct matcher binaries with artifact hashes |
 | `python3 -m tools.bench.process_metrics` | Measure a standalone process on Linux |
 | `python3 -m tools.bench.sqlite_probe` | Separate SQLite batching/index experiment on Linux |
-| `python3 -m tools.bench.dns_probe` | Closed-loop blocked-UDP diagnostic with latency and process metrics |
+| `python3 -m tools.bench.dns_probe` | Closed-loop blocked/synthetic-A UDP diagnostic with latency and process metrics |
 | `python3 -m tools.bench.run_native` | Supplementary native HTTP diagnostic under the same server caps |
 
 `load_report.py`, `process_metrics.py` and `resource_budget.py` share the tested
@@ -70,3 +70,19 @@ percentiles above its 100 ms range are null, with overflow count and maximum
 reported. This is a closed-loop blocked-query diagnostic, not an offered-arrival
 capacity result or a substitute for k6. Forwarding correctness uses local mock
 upstreams in `tests/dns_server.rs`; upstream network latency needs its own workload.
+
+For a controlled cache experiment against a synthetic upstream returning one A
+record with TTL at most 300 seconds:
+
+```sh
+python3 -m tools.bench.dns_probe --address 127.0.0.1:5353 \
+  --hostname cache.example --answer-ip 192.0.2.7 --answer-ttl 300 \
+  --duration 60 --clients 1 --output results/cache/report.json
+```
+
+This narrow validator checks the ID, flags, exact question, one A/IN record,
+address, TTL ceiling and complete packet framing. It accepts the test owner's
+uncompressed name or a compression pointer to the question. It is not a general
+DNS response parser. Compare `serve --cache-bytes 0` with the default cache using
+the same upstream, binary, index and resource limits; report upstream request
+counts as well as client latency. The workload does not establish office capacity.

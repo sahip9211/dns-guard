@@ -1,6 +1,9 @@
 //! Bounded DNS forwarding with one immutable policy snapshot and explicit client ACLs.
-//! No cache, recursive iteration, DNSSEC validation, or persistent query logging.
-use crate::{Category, Index};
+//! Bounded response caching; no recursive iteration, DNSSEC validation or query history.
+use crate::{
+    Category, Index,
+    cache::{Cache, MAX_CACHE_BYTES, Usage, cache_key},
+};
 use hickory_proto::{
     op::{Edns, Message, MessageType, OpCode, ResponseCode},
     rr::{DNSClass, RData, RecordType},
@@ -12,10 +15,10 @@ use std::{
     io,
     net::{IpAddr, SocketAddr},
     sync::{
-        Arc,
+        Arc, Mutex,
         atomic::{AtomicU64, Ordering::Relaxed},
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -36,6 +39,8 @@ pub struct ServerConfig {
     pub categories: u32,
     pub max_inflight: usize,
     pub max_tcp_connections: usize,
+    /// Cache-owned table and payload byte limit; zero disables caching.
+    pub cache_bytes: usize,
     /// One deadline covering upstream connect, UDP receive, and TCP fallback.
     pub timeout: Duration,
     pub allowed_clients: Vec<IpNet>,
@@ -48,6 +53,7 @@ impl Default for ServerConfig {
             categories: Category::ALL,
             max_inflight: 64,
             max_tcp_connections: 32,
+            cache_bytes: 256 * 1024,
             timeout: Duration::from_secs(2),
             allowed_clients: vec!["127.0.0.0/8".parse().unwrap(), "::1/128".parse().unwrap()],
         }
@@ -57,6 +63,7 @@ impl ServerConfig {
     fn validate(&self) -> io::Result<()> {
         if !(1..=4096).contains(&self.max_inflight)
             || !(1..=1024).contains(&self.max_tcp_connections)
+            || (self.cache_bytes != 0 && !(4096..=MAX_CACHE_BYTES).contains(&self.cache_bytes))
             || self.timeout.is_zero()
             || self.timeout > Duration::from_secs(30)
             || self.categories & !Category::ALL != 0
@@ -99,6 +106,11 @@ pub struct Stats {
     send_errors: AtomicU64,
     inflight: AtomicU64,
     peak_inflight: AtomicU64,
+    cache_hits: AtomicU64,
+    cache_misses: AtomicU64,
+    cache_entries: AtomicU64,
+    cache_bytes: AtomicU64,
+    cache_evictions: AtomicU64,
 }
 /// Approximate concurrent counters, not a transactional snapshot. No hostnames retained.
 #[derive(Debug, Clone, Copy)]
@@ -113,8 +125,18 @@ pub struct StatsSnapshot {
     pub send_errors: u64,
     pub inflight: u64,
     pub peak_inflight: u64,
+    pub cache_hits: u64,
+    pub cache_misses: u64,
+    pub cache_entries: u64,
+    pub cache_bytes: u64,
+    pub cache_evictions: u64,
 }
 impl Stats {
+    fn cache_usage(&self, usage: Usage) {
+        self.cache_entries.store(usage.entries as u64, Relaxed);
+        self.cache_bytes.store(usage.bytes as u64, Relaxed);
+        self.cache_evictions.store(usage.evictions, Relaxed);
+    }
     pub fn snapshot(&self) -> StatsSnapshot {
         StatsSnapshot {
             received: self.received.load(Relaxed),
@@ -127,6 +149,11 @@ impl Stats {
             send_errors: self.send_errors.load(Relaxed),
             inflight: self.inflight.load(Relaxed),
             peak_inflight: self.peak_inflight.load(Relaxed),
+            cache_hits: self.cache_hits.load(Relaxed),
+            cache_misses: self.cache_misses.load(Relaxed),
+            cache_entries: self.cache_entries.load(Relaxed),
+            cache_bytes: self.cache_bytes.load(Relaxed),
+            cache_evictions: self.cache_evictions.load(Relaxed),
         }
     }
 }
@@ -144,6 +171,7 @@ struct State {
     index: Arc<Index>,
     stats: Arc<Stats>,
     queries: Arc<Semaphore>,
+    cache: Mutex<Cache>,
 }
 impl State {
     fn acquire(&self) -> Option<Inflight> {
@@ -179,6 +207,9 @@ impl Server {
         }
         let udp = Arc::new(UdpSocket::bind(address).await?);
         let queries = Arc::new(Semaphore::new(config.max_inflight));
+        let cache = Cache::new(config.cache_bytes);
+        let stats = Arc::new(Stats::default());
+        stats.cache_usage(cache.usage());
         Ok(Self {
             udp,
             tcp,
@@ -186,7 +217,8 @@ impl Server {
                 config,
                 index,
                 queries,
-                stats: Arc::default(),
+                stats,
+                cache: Mutex::new(cache),
             }),
         })
     }
@@ -357,13 +389,32 @@ async fn handle(state: &State, bytes: &[u8], tcp: bool) -> Option<Vec<u8>> {
         state.stats.blocked.fetch_add(1, Relaxed);
         return Some(local_reply(&request, ResponseCode::Refused, false));
     }
+    let key = if state.config.cache_bytes == 0 {
+        None
+    } else {
+        cache_key(&request)
+    };
+    if let Some(key) = &key {
+        // This short cache lock never crosses an await or protects DNS I/O.
+        let hit = {
+            let mut cache = state.cache.lock().expect("cache lock poisoned");
+            let hit = cache.get(key, request.metadata.id, Instant::now());
+            state.stats.cache_usage(cache.usage());
+            hit
+        };
+        if let Some(bytes) = hit {
+            state.stats.cache_hits.fetch_add(1, Relaxed);
+            return Some(client_reply(&request, bytes, tcp));
+        }
+        state.stats.cache_misses.fetch_add(1, Relaxed);
+    }
     let result = timeout(
         state.config.timeout,
         forward(&request, state.config.upstream, tcp),
     )
     .await;
     match result {
-        Ok(Ok((mut bytes, response))) => {
+        Ok(Ok((bytes, response))) => {
             // Apply the same category policy to CNAME destinations before
             // returning an alias answer. Each name keeps its own allow rules.
             for record in &response.answers {
@@ -378,15 +429,13 @@ async fn handle(state: &State, bytes: &[u8], tcp: bool) -> Option<Vec<u8>> {
                     return Some(local_reply(&request, ResponseCode::Refused, false));
                 }
             }
-            state.stats.forwarded.fetch_add(1, Relaxed);
-            if !tcp && bytes.len() > usize::from(request.max_payload().clamp(512, UDP_PAYLOAD)) {
-                return Some(local_reply(&request, ResponseCode::NoError, true));
+            if let Some(key) = key {
+                let mut cache = state.cache.lock().expect("cache lock poisoned");
+                cache.insert(key, &bytes, &response, Instant::now());
+                state.stats.cache_usage(cache.usage());
             }
-            // Preserve unknown RDATA bytes and compression offsets; only mutate
-            // fixed header fields. Plain upstream DNS is not authenticated here.
-            bytes[..2].copy_from_slice(&request.metadata.id.to_be_bytes());
-            bytes[3] &= !0x20;
-            Some(bytes)
+            state.stats.forwarded.fetch_add(1, Relaxed);
+            Some(client_reply(&request, bytes, tcp))
         }
         _ => {
             state.stats.upstream_errors.fetch_add(1, Relaxed);
@@ -394,6 +443,17 @@ async fn handle(state: &State, bytes: &[u8], tcp: bool) -> Option<Vec<u8>> {
         }
     }
 }
+fn client_reply(request: &Message, mut bytes: Vec<u8>, tcp: bool) -> Vec<u8> {
+    if !tcp && bytes.len() > usize::from(request.max_payload().clamp(512, UDP_PAYLOAD)) {
+        return local_reply(request, ResponseCode::NoError, true);
+    }
+    // Preserve record bytes/compression offsets; plain upstream DNS is not
+    // independently authenticated. The cache additionally ages real RR TTLs.
+    bytes[..2].copy_from_slice(&request.metadata.id.to_be_bytes());
+    bytes[3] &= !0x20;
+    bytes
+}
+
 fn matches_response(response: &Message, request: &Message) -> bool {
     response.metadata.message_type == MessageType::Response
         && response.metadata.id == request.metadata.id

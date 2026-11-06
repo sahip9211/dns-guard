@@ -86,6 +86,8 @@ fn config(upstream: SocketAddr) -> ServerConfig {
     ServerConfig {
         upstream,
         timeout: Duration::from_millis(250),
+        // Transport tests must exercise the upstream on every request.
+        cache_bytes: 0,
         ..Default::default()
     }
 }
@@ -549,6 +551,194 @@ fn blocks_cname_targets_and_disabled_categories_do_not_block() {
         );
         mock.await.unwrap();
         assert_eq!(stats.snapshot().blocked, 1);
+        stop.send(()).unwrap();
+        task.await.unwrap().unwrap();
+    });
+}
+
+#[test]
+fn cache_serves_new_ids_over_udp_and_tcp_without_recontacting_upstream() {
+    run(async {
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let mut c = config(upstream.local_addr().unwrap());
+        c.cache_bytes = 16384;
+        let (address, stop, task, stats) = start(c).await;
+        let mock = tokio::spawn(async move {
+            let mut bytes = [0; 4096];
+            let (n, peer) = upstream.recv_from(&mut bytes).await.unwrap();
+            let request = Message::from_vec(&bytes[..n]).unwrap();
+            upstream
+                .send_to(&answer(&request).to_vec().unwrap(), peer)
+                .await
+                .unwrap();
+        });
+        let first = udp(address, &query("cached.example")).await;
+        assert_eq!(first.answers.len(), 1);
+        mock.await.unwrap(); // Upstream is now closed.
+        let mut request = query("cached.example");
+        request.metadata.id = 77;
+        let second = udp(address, &request).await;
+        assert_eq!(second.metadata.id, 77);
+        assert_eq!(second.answers[0].data, first.answers[0].data);
+        assert!(second.answers[0].ttl <= 30);
+        assert!(!second.metadata.authentic_data);
+        let mut tcp = TcpStream::connect(address).await.unwrap();
+        request.metadata.id = 88;
+        write_frame(&mut tcp, &request).await;
+        let third = frame(&mut tcp).await;
+        assert_eq!(third.metadata.id, 88);
+        assert_eq!(third.answers.len(), 1);
+        let snapshot = stats.snapshot();
+        assert_eq!(snapshot.forwarded, 1);
+        assert_eq!(snapshot.cache_hits, 2);
+        assert_eq!(snapshot.cache_misses, 1);
+        assert_eq!(snapshot.cache_entries, 1);
+        assert!(snapshot.cache_bytes <= 16384);
+        stop.send(()).unwrap();
+        task.await.unwrap().unwrap();
+    });
+}
+
+#[test]
+fn cached_query_flags_remain_isolated_and_blocked_aliases_are_not_admitted() {
+    run(async {
+        use hickory_proto::rr::rdata::CNAME;
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let mut c = config(upstream.local_addr().unwrap());
+        c.cache_bytes = 16384;
+        let (address, stop, task, stats) = start(c).await;
+        let mock = tokio::spawn(async move {
+            let mut bytes = [0; 4096];
+            for _ in 0..4 {
+                let (n, peer) = upstream.recv_from(&mut bytes).await.unwrap();
+                let request = Message::from_vec(&bytes[..n]).unwrap();
+                let mut reply = answer(&request);
+                if request.queries[0].name.to_ascii() == "alias.example." {
+                    reply.answers.clear();
+                    reply.add_answer(Record::from_rdata(
+                        request.queries[0].name.clone(),
+                        30,
+                        RData::CNAME(CNAME(Name::from_ascii("ads.example.").unwrap())),
+                    ));
+                }
+                reply.metadata.checking_disabled = request.metadata.checking_disabled;
+                upstream
+                    .send_to(&reply.to_vec().unwrap(), peer)
+                    .await
+                    .unwrap();
+            }
+        });
+        let request = query("cache-flags.example");
+        assert!(!udp(address, &request).await.metadata.checking_disabled);
+        let mut cd = request.clone();
+        cd.metadata.checking_disabled = true;
+        assert!(udp(address, &cd).await.metadata.checking_disabled);
+        assert!(!udp(address, &request).await.metadata.checking_disabled);
+        for _ in 0..2 {
+            assert_eq!(
+                udp(address, &query("alias.example"))
+                    .await
+                    .metadata
+                    .response_code,
+                ResponseCode::Refused
+            );
+        }
+        mock.await.unwrap();
+        assert_eq!(stats.snapshot().cache_hits, 1);
+        assert_eq!(stats.snapshot().blocked, 2);
+        stop.send(()).unwrap();
+        task.await.unwrap().unwrap();
+    });
+}
+
+#[test]
+fn negative_cache_returns_soa_bounded_answers_without_upstream() {
+    run(async {
+        use hickory_proto::rr::rdata::SOA;
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let mut c = config(upstream.local_addr().unwrap());
+        c.cache_bytes = 16384;
+        let (address, stop, task, stats) = start(c).await;
+        let mock = tokio::spawn(async move {
+            let mut bytes = [0; 4096];
+            let (n, peer) = upstream.recv_from(&mut bytes).await.unwrap();
+            let request = Message::from_vec(&bytes[..n]).unwrap();
+            let mut reply = answer(&request);
+            reply.answers.clear();
+            reply.metadata.response_code = ResponseCode::NXDomain;
+            reply.add_authority(Record::from_rdata(
+                Name::from_ascii("example.").unwrap(),
+                30,
+                RData::SOA(SOA::new(
+                    Name::from_ascii("ns.example.").unwrap(),
+                    Name::from_ascii("hostmaster.example.").unwrap(),
+                    1,
+                    60,
+                    60,
+                    3600,
+                    10,
+                )),
+            ));
+            upstream
+                .send_to(&reply.to_vec().unwrap(), peer)
+                .await
+                .unwrap();
+        });
+        assert_eq!(
+            udp(address, &query("missing.example"))
+                .await
+                .metadata
+                .response_code,
+            ResponseCode::NXDomain
+        );
+        mock.await.unwrap();
+        let reply = udp(address, &query("missing.example")).await;
+        assert_eq!(reply.metadata.response_code, ResponseCode::NXDomain);
+        assert!(reply.authorities[0].ttl <= 10);
+        assert_eq!(stats.snapshot().cache_hits, 1);
+        stop.send(()).unwrap();
+        task.await.unwrap().unwrap();
+    });
+}
+
+#[test]
+fn large_cached_answer_truncates_udp_but_still_serves_full_tcp_reply() {
+    run(async {
+        let upstream = UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let mut c = config(upstream.local_addr().unwrap());
+        c.cache_bytes = 16384;
+        let (address, stop, task, _) = start(c).await;
+        let mock = tokio::spawn(async move {
+            let mut bytes = [0; 4096];
+            let (n, peer) = upstream.recv_from(&mut bytes).await.unwrap();
+            let request = Message::from_vec(&bytes[..n]).unwrap();
+            let mut reply = answer(&request);
+            reply
+                .answers
+                .extend(std::iter::repeat_n(reply.answers[0].clone(), 79));
+            upstream
+                .send_to(&reply.to_vec().unwrap(), peer)
+                .await
+                .unwrap();
+        });
+        assert!(
+            udp(address, &query("large.example"))
+                .await
+                .metadata
+                .truncation
+        );
+        mock.await.unwrap();
+        assert!(
+            udp(address, &query("large.example"))
+                .await
+                .metadata
+                .truncation
+        );
+        let mut tcp = TcpStream::connect(address).await.unwrap();
+        write_frame(&mut tcp, &query("large.example")).await;
+        let reply = frame(&mut tcp).await;
+        assert_eq!(reply.answers.len(), 80);
+        assert!(!reply.metadata.truncation);
         stop.send(()).unwrap();
         task.await.unwrap().unwrap();
     });

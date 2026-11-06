@@ -16,9 +16,9 @@ RAM is a separate constrained resource, measured through process and system memo
 
 No complete application currently meets this limit. The strict cap is a feasibility objective, not an achieved property.
 
-Latest implementation checkpoint: the Linux CLI including UDP/TCP forwarding is
-1,019,376 bytes. A current HaGeZi Light feed plus synthetic test rules compiles to
-1,018,122 bytes for 87,812 logical policies, giving 2,037,498 bytes for these two
+Latest implementation checkpoint: the Linux CLI including UDP/TCP forwarding and caching is
+1,032,472 bytes. A current HaGeZi Light feed plus synthetic test rules compiles to
+1,018,122 bytes for 87,812 logical policies, giving 2,050,594 bytes for these two
 artifacts. This differs from the earlier 178,507-rule corpus and is not a compression
 comparison. UI, analytics, retained feeds, notices and other installed state are
 outside that pair. The complete-product target is still unproven.

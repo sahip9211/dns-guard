@@ -3,6 +3,7 @@
 //! A bounded DNS forwarding service is available in [`server`].
 #![forbid(unsafe_code)]
 
+mod cache;
 mod domain;
 mod feeds;
 mod index;

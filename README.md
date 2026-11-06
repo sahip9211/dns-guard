@@ -4,13 +4,14 @@ A compact, exact DNS policy engine in Rust, designed as the foundation for a
 self-hosted filtering service with desktop and browser administration.
 
 **Early development:** the policy engine, compiler and bounded UDP/TCP DNS
-forwarder work. The administration UI, cache, scheduled feed refresh and
+forwarder and bounded response cache work. The administration UI, scheduled feed refresh and
 production packages are not implemented. The complete application has not yet met its size
 or throughput goals.
 
 ## What works
 
 - UDP/TCP DNS filtering, upstream TCP fallback, client network allowlists and bounded concurrency.
+- Bounded positive/negative response caching with TTL aging, eviction and counters.
 - Exact hostname and subdomain matching with compressed immutable FST indexes.
 - Category-scoped block, allow and enforced-block policies.
 - Selected-source compilation that preserves overlapping contributions.
@@ -125,5 +126,6 @@ is not a passing capacity result. Native-client screens are separately labeled
 and do not substitute for k6 acceptance.
 
 Start with the [documentation index](docs/README.md), [implementation status](docs/implementation-status.md)
-and [product roadmap](goal.md). Hardware, workload definitions, resource accounting
+and the [application task checklist](task.md). The [product roadmap](goal.md) describes
+the complete requirements. Hardware, workload definitions, resource accounting
 and failed tests are retained with the results.

@@ -2,6 +2,8 @@
 
 - [DNS service](dns-service.md): listener setup, transport limits and counters.
 - [Implementation status](implementation-status.md): working components and remaining scope.
+- [Application tasks](../task.md): verified work and remaining implementation milestones.
+- [DNS cache](dns-cache.md): eligibility, TTL handling, memory limits and tests.
 - [Product roadmap](../goal.md): service, UI, parental controls, platforms and resource goals.
 - [Architecture and stack research](stack-research.md): design choices and alternatives.
 - [Feed sources](feed-sources.md) and [source controls](filter-sources.md): coverage, selection and refresh.

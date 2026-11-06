@@ -17,6 +17,7 @@ Serve options:
   --max-inflight N          Outstanding queries, default 64, maximum 4096
   --max-tcp-connections N   TCP clients, default 32, maximum 1024
   --timeout-ms N           Whole upstream exchange deadline, default 2000
+  --cache-bytes N          Cache table/payload limit, default 262144; 0 disables
 
 The listener uses one runtime thread. No OS DNS settings are changed.
 
@@ -107,6 +108,7 @@ fn serve_command(args: &[String]) -> CliResult<()> {
             "--max-inflight" => config.max_inflight = value.parse()?,
             "--max-tcp-connections" => config.max_tcp_connections = value.parse()?,
             "--timeout-ms" => config.timeout = Duration::from_millis(value.parse()?),
+            "--cache-bytes" => config.cache_bytes = value.parse()?,
             _ => return Err(format!("unknown serve option: {key}").into()),
         }
     }

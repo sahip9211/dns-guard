@@ -1,4 +1,4 @@
-"""Closed-loop UDP diagnostic for locally blocked DNS queries; not a k6 capacity test."""
+"""Closed-loop UDP diagnostic for blocked or known single-A replies; not a k6 capacity test."""
 import argparse
 from array import array
 import asyncio
@@ -27,6 +27,21 @@ def validate_block_reply(reply, query):
     identifier, flags, questions, answers, authority, additional = struct.unpack('!6H', reply[:12])
     return (reply[:2] == query[:2] and flags == 0x8185 and questions == 1
             and answers == authority == additional == 0 and reply[12:] == query[12:])
+
+
+def validate_a_reply(reply, query, address, max_ttl):
+    """Validate the narrow synthetic single-A workload independently of the server."""
+    if len(reply) < len(query) + 16 or reply[:2] != query[:2]: return False
+    _, flags, questions, answers, authority, additional = struct.unpack('!6H', reply[:12])
+    if flags != 0x8180 or (questions, answers, authority, additional) != (1, 1, 0, 0): return False
+    if reply[12:len(query)] != query[12:]: return False
+    cursor = len(query)
+    if reply[cursor:cursor+2] == b'\xc0\x0c': cursor += 2
+    elif reply[cursor:cursor+len(query)-16] == query[12:-4]: cursor += len(query)-16
+    else: return False
+    if len(reply) != cursor + 14: return False
+    kind, dns_class, ttl, length = struct.unpack('!HHIH', reply[cursor:cursor+10])
+    return (kind, dns_class, length) == (1, 1, 4) and ttl <= max_ttl and reply[cursor+10:] == address
 
 
 class Histogram:
@@ -59,6 +74,7 @@ async def probe(args):
     family = socket.AF_INET6 if ':' in host else socket.AF_INET
     socket.inet_pton(family, host)  # Only explicit IPs; no bootstrap DNS dependency.
     target = (host, int(port))
+    expected_address = socket.inet_pton(socket.AF_INET, args.answer_ip) if args.answer_ip else None
     started = time.monotonic()
     deadline = started + args.duration
     histogram = Histogram()
@@ -90,7 +106,9 @@ async def probe(args):
                 try:
                     await loop.sock_sendall(sock, query)
                     reply = await asyncio.wait_for(loop.sock_recv(sock, 4096), 1)
-                    if not validate_block_reply(reply, query):
+                    valid = (validate_a_reply(reply, query, expected_address, args.answer_ttl)
+                             if expected_address else validate_block_reply(reply, query))
+                    if not valid:
                         counts['errors'] += 1
                     else:
                         counts['correct'] += 1
@@ -108,7 +126,7 @@ async def probe(args):
         await sampling
     elapsed = time.monotonic() - started
     return {
-        'kind': 'closed-loop-blocked-udp-diagnostic-not-k6',
+        'kind': 'closed-loop-positive-udp-diagnostic-not-k6' if expected_address else 'closed-loop-blocked-udp-diagnostic-not-k6',
         'created_at': datetime.now(timezone.utc).isoformat(),
         'clients': args.clients, 'configured_duration_s': args.duration,
         'elapsed_with_drain_s': elapsed, **counts,
@@ -129,11 +147,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--address', default='127.0.0.1:5353')
     parser.add_argument('--hostname', default='ads.example')
+    parser.add_argument('--answer-ip', help='expect exactly one A answer with this IPv4 address instead of REFUSED')
+    parser.add_argument('--answer-ttl', type=int, default=300, help='maximum TTL for the synthetic A answer')
     parser.add_argument('--duration', type=int, default=60)
     parser.add_argument('--clients', type=int, default=32)
     parser.add_argument('--pid', type=int, help='server PID for Linux CPU/RSS sampling')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    if not 0 <= args.answer_ttl <= 2147483647: parser.error('invalid maximum answer TTL')
     if not 1 <= args.duration <= 600 or not 1 <= args.clients <= 1024:
         parser.error('duration must be 1..600 seconds and clients 1..1024')
     report = asyncio.run(probe(args))

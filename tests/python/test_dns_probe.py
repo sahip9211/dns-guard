@@ -25,3 +25,19 @@ class DnsProbeTests(unittest.TestCase):
         self.assertIsNone(histogram.percentile(99))
         self.assertEqual(histogram.overflow, 1)
         self.assertIsNone(Histogram().percentile(99))
+
+class PositiveReplyTests(unittest.TestCase):
+    def test_checks_synthetic_a_answer_address_ttl_and_framing(self):
+        from tools.bench.dns_probe import validate_a_reply
+        query = make_query('cache.example', 10)
+        answer = bytearray(query)
+        answer[2:4] = b'\x81\x80'; answer[7] = 1
+        answer += b'\xc0\x0c' + struct.pack('!HHIH', 1, 1, 300, 4) + b'\xc0\x00\x02\x07'
+        self.assertTrue(validate_a_reply(answer, query, b'\xc0\x00\x02\x07', 300))
+        self.assertFalse(validate_a_reply(answer, query, b'\xc0\x00\x02\x08', 300))
+        self.assertFalse(validate_a_reply(answer, query, b'\xc0\x00\x02\x07', 299))
+        self.assertFalse(validate_a_reply(answer[:-1], query, b'\xc0\x00\x02\x07', 300))
+        bad = bytearray(answer); bad[3] |= 0x20
+        self.assertFalse(validate_a_reply(bad, query, b'\xc0\x00\x02\x07', 300))
+        uncompressed = answer[:len(query)] + query[12:-4] + answer[len(query)+2:]
+        self.assertTrue(validate_a_reply(uncompressed, query, b'\xc0\x00\x02\x07', 300))
