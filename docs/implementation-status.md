@@ -6,9 +6,13 @@ updater.
 
 ## Implemented
 
-Private policy indexes, OS credential custody and installed per-instance service
+Private policy index encryption and installed per-instance service
 identities are still unfinished. Encryption currently covers configuration and
 its rollback journal; see [security scope](security-model.md).
+
+- Native credential libraries for Linux Secret Service, Windows Credential Manager
+  and macOS Keychain, with explicit key identifiers and no fallback/regeneration.
+  See [credential scope and testing](desktop-credentials.md).
 
 - Encrypted SQLCipher startup configuration with revision conflict checks, a
   64 KiB database ceiling, explicit key files, wrong-key/tamper rejection and interrupted-write recovery and CLI initialization/edits.

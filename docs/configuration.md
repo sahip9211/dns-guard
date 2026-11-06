@@ -53,6 +53,8 @@ by this milestone. The data key is not an API credential or a code-signing key.
 
 Linux services can use [native systemd credential delivery](service-credentials.md)
 through the existing `--key-file` interface, without another runtime library.
+Desktop builds also support [native credential stores](desktop-credentials.md)
+with `config keygen --keyring` and `--keyring ID` instead of `--key-file PATH`.
 
 ## DNS path and resource budgets
 

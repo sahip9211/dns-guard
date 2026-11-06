@@ -60,10 +60,11 @@ counter outside the database.
   different application identities. Separate instance authorization still matters.
   [Apple code signing and keychain requirements](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/AboutCS/AboutCS.html).
 
-These integrations are requirements, not currently installed protections.
-Linux native encrypted-credential delivery has an opt-in integration test and a
-[system service template](service-credentials.md); privileged cross-account
-installation tests and the desktop credential backends remain pending.
+Native key storage is available through [desktop credential libraries](desktop-credentials.md).
+Linux encrypted-credential delivery has an opt-in integration test and a
+[system service template](service-credentials.md). Privileged cross-account
+installation tests, Windows/macOS service provisioning and signed-package
+Keychain qualification remain pending; native storage alone is not installed isolation.
 
 ## Database encryption and performance
 

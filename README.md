@@ -26,6 +26,7 @@ adapters and load generators are development tools, excluded from the runtime.
 
 Persistent setup: see [configuration commands and recovery](docs/configuration.md).
 Linux service setup: see [systemd credentials and isolation requirements](docs/service-credentials.md).
+Desktop key storage: see [Linux, Windows and macOS credential libraries](docs/desktop-credentials.md).
 
 ## Build and test
 

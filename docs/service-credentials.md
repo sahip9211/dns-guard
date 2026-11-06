@@ -96,8 +96,8 @@ unneeded dependencies. Core's mock/sample stores are not secure production store
 [keyring guidance](https://docs.rs/keyring/latest/keyring/),
 [keyring-core](https://docs.rs/keyring-core/latest/keyring_core/).
 
-Desktop integration remains pending. It must fail clearly when its secure store
-is unavailable, and must not silently fall back to a plaintext key. A credential
+The [desktop library integration](desktop-credentials.md) now uses those native
+backends and fails when its secure store is unavailable. A credential
 library does not establish OS account isolation or API authorization. Browser and
 desktop clients should ultimately hold their own API credentials, not the DNS
 service's database key. See [security boundaries](security-model.md).

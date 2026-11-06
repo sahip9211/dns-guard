@@ -9,8 +9,12 @@ use std::path::Path;
 
 pub fn run(args: &[String]) -> CliResult<()> {
     if args.first().is_some_and(|arg| arg == "keygen") {
+        if args.len() == 2 && args[1] == "--keyring" {
+            println!("{}", DataKey::create_in_keyring()?);
+            return Ok(());
+        }
         if args.len() != 2 {
-            return Err("use config keygen KEY_FILE".into());
+            return Err("use config keygen KEY_FILE or config keygen --keyring".into());
         }
         DataKey::create_file(Path::new(&args[1]))?;
         println!("created private instance key; keep it separate from database backups");
@@ -69,22 +73,29 @@ pub fn run(args: &[String]) -> CliResult<()> {
 
 pub fn with_key(args: &[String]) -> CliResult<(Vec<String>, DataKey)> {
     let mut rest = Vec::new();
-    let mut path = None;
+    let mut source = None;
     let mut i = 0;
     while i < args.len() {
-        if args[i] == "--key-file" {
-            if path.is_some() || i + 1 == args.len() {
-                return Err("supply exactly one --key-file PATH".into());
+        if args[i] == "--key-file" || args[i] == "--keyring" {
+            if source.is_some() || i + 1 == args.len() {
+                return Err(
+                    "supply exactly one key source: --key-file PATH or --keyring ID".into(),
+                );
             }
-            path = Some(&args[i + 1]);
+            source = Some((args[i].as_str(), &args[i + 1]));
             i += 2;
         } else {
             rest.push(args[i].clone());
             i += 1;
         }
     }
-    let path=path.ok_or("encrypted configuration requires --key-file PATH; create a new instance key with config keygen")?;
-    Ok((rest, DataKey::read_file(Path::new(path))?))
+    let (kind, value)=source.ok_or("encrypted configuration requires --key-file PATH or --keyring ID; create a new instance key with config keygen")?;
+    let key = if kind == "--keyring" {
+        DataKey::read_keyring(value)?
+    } else {
+        DataKey::read_file(Path::new(value))?
+    };
+    Ok((rest, key))
 }
 
 fn validate_index(settings: &Settings) -> CliResult<()> {

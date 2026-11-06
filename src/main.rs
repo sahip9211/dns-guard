@@ -12,6 +12,7 @@ const HELP: &str = "dns-guard — compact DNS filtering prototype
   dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
   dns-guard serve --config DATABASE --key-file KEY_FILE
   dns-guard config keygen KEY_FILE
+  dns-guard config keygen --keyring
   dns-guard config encrypt OLD_DATABASE NEW_DATABASE --key-file KEY_FILE
   dns-guard config init DATABASE INDEX --key-file KEY_FILE --upstream IP:PORT [OPTIONS]
   dns-guard config show DATABASE --key-file KEY_FILE
@@ -29,6 +30,8 @@ Serve options:
 The listener uses one runtime thread. No OS DNS settings are changed.
 Saved configuration changes apply after restarting the service.
 Configuration is read and closed before starting the DNS runtime.
+Use --keyring ID instead of --key-file PATH to read an existing OS-store key.
+config keygen --keyring prints a new public identifier, never the secret key.
 
 FORMAT: domains | hosts | adblock
 CATEGORIES: comma-separated ads,adult,malware,tracking,phishing,gambling,social; all; none

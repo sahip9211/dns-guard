@@ -8,6 +8,9 @@ use std::{
 };
 use zeroize::Zeroizing;
 
+#[cfg(feature = "os-keyring")]
+mod os_store;
+
 pub struct DataKey(Zeroizing<[u8; 32]>);
 impl std::fmt::Debug for DataKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -15,6 +18,36 @@ impl std::fmt::Debug for DataKey {
     }
 }
 impl DataKey {
+    /// Create a new OS-store entry under a random public identifier, never a
+    /// caller-selected name that could accidentally replace an existing key.
+    pub fn create_in_keyring() -> Result<String> {
+        #[cfg(feature = "os-keyring")]
+        {
+            os_store::create()
+        }
+        #[cfg(not(feature = "os-keyring"))]
+        {
+            Err(Error::new(
+                "OS credential store support is not enabled in this build",
+            ))
+        }
+    }
+
+    /// Read only: missing, locked or corrupt credentials are never regenerated.
+    pub fn read_keyring(id: &str) -> Result<Self> {
+        #[cfg(feature = "os-keyring")]
+        {
+            os_store::read(id)
+        }
+        #[cfg(not(feature = "os-keyring"))]
+        {
+            let _ = id;
+            Err(Error::new(
+                "OS credential store support is not enabled in this build",
+            ))
+        }
+    }
+
     /// Raw high-entropy key supplied by a credential provider. Not a password KDF.
     pub fn from_bytes(bytes: [u8; 32]) -> Self {
         Self(Zeroizing::new(bytes))

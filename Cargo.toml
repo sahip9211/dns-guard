@@ -6,6 +6,10 @@ rust-version = "1.89"
 publish = false
 description = "Compact, exact DNS policy engine and offline list compiler"
 
+[features]
+default = ["os-keyring"]
+os-keyring = ["dep:keyring-core", "dep:hex", "dep:apple-native-keyring-store", "dep:windows-native-keyring-store", "dep:dbus-secret-service-keyring-store"]
+
 [dependencies]
 fst = "=0.4.7"
 hickory-proto = { version = "=0.26.3", default-features = false, features = ["std"] }
@@ -13,7 +17,18 @@ ipnet = "=2.11.0"
 rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled-sqlcipher-vendored-openssl", "limits", "fallible_uint"] }
 getrandom = "=0.4.3"
 zeroize = { version = "=1.9.1", default-features = false, features = ["alloc"] }
+keyring-core = { version = "=1.0.1", optional = true }
+hex = { version = "=0.4.3", default-features = false, features = ["alloc"], optional = true }
 tokio = { version = "=1.48.0", default-features = false, features = ["net", "rt", "sync", "time", "io-util", "macros", "signal"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dbus-secret-service-keyring-store = { version = "=1.0.1", default-features = false, features = ["crypto-openssl", "vendored"], optional = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+apple-native-keyring-store = { version = "=1.0.2", default-features = false, features = ["keychain"], optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-native-keyring-store = { version = "=1.1.0", default-features = false, optional = true }
 
 [dev-dependencies]
 # Development-only event-loop benchmark adapter.

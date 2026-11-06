@@ -109,6 +109,7 @@ No completed component substitutes for the whole-product size/performance gates.
 - [ ] SEC-07 — Keep data-encryption, API-authentication and release-signing keys separate; retain release private keys outside shipped binaries and repositories.
 - [ ] SEC-08 — Test cross-instance access under actual OS identities, malicious replacement, replay/rollback limits, memory/crash dump exposure and encrypted-size/resource budgets.
 - [x] SEC-09 — Verify native systemd encrypted-credential delivery, wrong-key rejection, credential cleanup and DNS startup without adding runtime dependencies; provide a system unit template pending privileged isolation qualification.
+- [ ] SEC-10 — Integrate maintained native credential libraries and pass real-store tests on Linux, Windows and macOS, with no plaintext fallback and an optional minimal headless build.
 
 ## Clients, profiles and parental controls
 
