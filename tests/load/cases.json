@@ -1,0 +1,11 @@
+[
+  {"domain":"ads.example","categories":1,"blocked":1},
+  {"domain":"child.ads.example","categories":127,"blocked":1},
+  {"domain":"badads.example","categories":127,"blocked":0},
+  {"domain":"safe.ads.example","categories":127,"blocked":0},
+  {"domain":"ads.example.evil","categories":127,"blocked":0},
+  {"domain":"adult.example","categories":2,"blocked":2},
+  {"domain":"child.adult.example","categories":1,"blocked":0},
+  {"domain":"ADULT.EXAMPLE.","categories":2,"blocked":2},
+  {"domain":"clean.example","categories":127,"blocked":0}
+]

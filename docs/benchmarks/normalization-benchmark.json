@@ -1,0 +1,156 @@
+{
+  "kind": "warm single-thread normalization comparison",
+  "runs": [
+    {
+      "round": 0,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1776,
+      "p95_ns": 4132,
+      "p99_ns": 5940,
+      "max_ns": 61413
+    },
+    {
+      "round": 0,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1416,
+      "p95_ns": 3491,
+      "p99_ns": 4864,
+      "max_ns": 193339
+    },
+    {
+      "round": 1,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1169,
+      "p95_ns": 2774,
+      "p99_ns": 3849,
+      "max_ns": 364104
+    },
+    {
+      "round": 1,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1481,
+      "p95_ns": 3024,
+      "p99_ns": 4122,
+      "max_ns": 56931
+    },
+    {
+      "round": 2,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1386,
+      "p95_ns": 3008,
+      "p99_ns": 4120,
+      "max_ns": 40185
+    },
+    {
+      "round": 2,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1110,
+      "p95_ns": 2410,
+      "p99_ns": 3244,
+      "max_ns": 144173
+    },
+    {
+      "round": 3,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1284,
+      "p95_ns": 3215,
+      "p99_ns": 4562,
+      "max_ns": 2303499
+    },
+    {
+      "round": 3,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1359,
+      "p95_ns": 3014,
+      "p99_ns": 4310,
+      "max_ns": 115647
+    },
+    {
+      "round": 4,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1425,
+      "p95_ns": 3246,
+      "p99_ns": 4714,
+      "max_ns": 114872
+    },
+    {
+      "round": 4,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1077,
+      "p95_ns": 2384,
+      "p99_ns": 3227,
+      "max_ns": 77808
+    },
+    {
+      "round": 5,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1086,
+      "p95_ns": 2513,
+      "p99_ns": 7976,
+      "max_ns": 96460
+    },
+    {
+      "round": 5,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1270,
+      "p95_ns": 2661,
+      "p99_ns": 3590,
+      "max_ns": 44348
+    }
+  ],
+  "medians": {
+    "before": {
+      "p50_ns": 1405.5,
+      "p95_ns": 3019.0,
+      "p99_ns": 4216.0
+    },
+    "after": {
+      "p50_ns": 1139.5,
+      "p95_ns": 2643.5,
+      "p99_ns": 4205.5
+    }
+  },
+  "binary_bytes": {
+    "before": 404104,
+    "after": 400296
+  },
+  "index_sha256": "6673b4548b594d22ed6cbd1081bad2a12278080da2466ea09d1443af3068d36a",
+  "queries_sha256": "ba46eea3351950eb4a0cf40bf12729d6d8a883fdf916d85d23633f6175995a0f",
+  "domain_source_sha256": "4e369609db647a093dca854aa59214cc35a8ade5234f556e2720ed788ac07adb"
+}

@@ -1,0 +1,190 @@
+{
+  "configuration": {
+    "before": "/tmp/dns-guard-packed-before/latency",
+    "after": "target/release/examples/latency",
+    "before_index": "/tmp/dns-guard-packed/mixed/v1.dngi",
+    "after_index": "/tmp/dns-guard-packed/mixed/v2.dngi",
+    "queries": "/tmp/dns-guard-packed/mixed/queries.tsv",
+    "pairs": 6,
+    "cpu": 7,
+    "output": "docs/packed-mixed-comparison.json"
+  },
+  "manifest": {
+    "before": {
+      "path": "/tmp/dns-guard-packed-before/latency",
+      "bytes": 374640,
+      "sha256": "78ec0b3b563bd7ba9f600f53f796b4733135706df013704764007e242d79222a"
+    },
+    "after": {
+      "path": "target/release/examples/latency",
+      "bytes": 383984,
+      "sha256": "47ad574531944a841e5762a4a296851fc1b4664ec34ceaf8276fbfca55eef176"
+    },
+    "before_index": {
+      "path": "/tmp/dns-guard-packed/mixed/v1.dngi",
+      "bytes": 2088839,
+      "sha256": "215cee026f257fcb2b64ac5e431f621337aacf7541b6008f3fdc053c2cbda92d"
+    },
+    "after_index": {
+      "path": "/tmp/dns-guard-packed/mixed/v2.dngi",
+      "bytes": 428680,
+      "sha256": "f084f9c307b89a45cf50cb1dca07f2632b92fa59bae5a5cb3a508f6c4598edd9"
+    },
+    "queries": {
+      "path": "/tmp/dns-guard-packed/mixed/queries.tsv",
+      "bytes": 345451,
+      "sha256": "f5e29065f3c5ce683fd41b0d08c8949debbfc912eeb429b6a726e39b20b15e26"
+    }
+  },
+  "runs": [
+    {
+      "pair": 0,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 18831,
+      "p95_ns": 33759,
+      "p99_ns": 51654,
+      "max_ns": 13498806
+    },
+    {
+      "pair": 0,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 2928,
+      "p95_ns": 4270,
+      "p99_ns": 5265,
+      "max_ns": 221802
+    },
+    {
+      "pair": 1,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 3235,
+      "p95_ns": 4783,
+      "p99_ns": 6360,
+      "max_ns": 2668026
+    },
+    {
+      "pair": 1,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 17446,
+      "p95_ns": 58930,
+      "p99_ns": 125287,
+      "max_ns": 28523111
+    },
+    {
+      "pair": 2,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 16143,
+      "p95_ns": 33167,
+      "p99_ns": 50401,
+      "max_ns": 8582202
+    },
+    {
+      "pair": 2,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 2449,
+      "p95_ns": 4946,
+      "p99_ns": 6666,
+      "max_ns": 8697341
+    },
+    {
+      "pair": 3,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 2092,
+      "p95_ns": 4465,
+      "p99_ns": 5407,
+      "max_ns": 123641
+    },
+    {
+      "pair": 3,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 23143,
+      "p95_ns": 63706,
+      "p99_ns": 156100,
+      "max_ns": 25152559
+    },
+    {
+      "pair": 4,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 15026,
+      "p95_ns": 39880,
+      "p99_ns": 62898,
+      "max_ns": 6187639
+    },
+    {
+      "pair": 4,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 2367,
+      "p95_ns": 4021,
+      "p99_ns": 4824,
+      "max_ns": 3042730
+    },
+    {
+      "pair": 5,
+      "variant": "after",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 428680,
+      "p50_ns": 2498,
+      "p95_ns": 4038,
+      "p99_ns": 4815,
+      "max_ns": 53055334
+    },
+    {
+      "pair": 5,
+      "variant": "before",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 2088839,
+      "p50_ns": 16183,
+      "p95_ns": 30974,
+      "p99_ns": 47691,
+      "max_ns": 6800310
+    }
+  ],
+  "median_of_runs": {
+    "before": {
+      "p50_ns": 16814.5,
+      "p95_ns": 36819.5,
+      "p99_ns": 57276.0
+    },
+    "after": {
+      "p50_ns": 2473.5,
+      "p95_ns": 4367.5,
+      "p99_ns": 5336.0
+    }
+  },
+  "decrease_percent": {
+    "p50_ns": 85.28948229206934,
+    "p95_ns": 88.13807900704789,
+    "p99_ns": 90.68370696277674
+  }
+}

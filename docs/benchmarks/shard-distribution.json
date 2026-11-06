@@ -1,0 +1,78 @@
+{
+  "queries": 12000,
+  "fixture_sha256": "ba46eea3351950eb4a0cf40bf12729d6d8a883fdf916d85d23633f6175995a0f",
+  "note": "Synthetic 12,000-case test fixture, not observed production DNS popularity. 25% probe descendants and 25% .invalid negatives affect skew.",
+  "top_original_first_letters": [
+    [
+      "p",
+      3492
+    ],
+    [
+      "n",
+      3146
+    ],
+    [
+      "s",
+      628
+    ],
+    [
+      "a",
+      612
+    ],
+    [
+      "m",
+      414
+    ]
+  ],
+  "top_reversed_first_letters": [
+    [
+      "m",
+      4689
+    ],
+    [
+      "d",
+      3138
+    ],
+    [
+      "e",
+      825
+    ],
+    [
+      "t",
+      606
+    ],
+    [
+      "p",
+      489
+    ]
+  ],
+  "top_tlds": [
+    [
+      "com",
+      4632
+    ],
+    [
+      "invalid",
+      3000
+    ],
+    [
+      "net",
+      519
+    ],
+    [
+      "top",
+      264
+    ],
+    [
+      "de",
+      255
+    ]
+  ],
+  "illustrative_four_worker_sha256_distribution": [
+    3051,
+    2990,
+    2929,
+    3030
+  ],
+  "hash_distribution_note": "Distribution only, not a throughput benchmark or selected production hasher. Repeated popular names still choose the same worker."
+}

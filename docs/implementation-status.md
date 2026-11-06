@@ -1,0 +1,55 @@
+# Implementation status
+
+DNS Guard is a policy-engine prototype. It does not yet provide a network DNS
+resolver, desktop/web administration, persistent analytics or a background updater.
+
+## Implemented
+
+- Strict hostname validation and normalization; explicit category masks.
+- Exact, domain-and-descendant, and descendant-only matching.
+- Category-scoped allows, ordinary blocks and enforced blocks.
+- Immutable FST snapshots: v1 for one policy kind, packed v2 for mixed kinds.
+- Compatibility reading v1 snapshots; version, count, record and checksum checks.
+- `compile_sources` rebuilds the enabled-source union without deleting other
+  sources' overlapping contributions. An empty compilation is rejected; the
+  future service must explicitly handle an all-disabled policy.
+- Budget-aware staged publication and a command-line compiler/checker.
+- On-demand HTTPS source fetching into a bounded, ignored development cache.
+- Direct matcher measurements, k6 orchestration, cgroup resource sampling and
+  separately labeled native-client/transport experiments.
+
+## Validation
+
+The current Rust suite contains 41 tests. The Python suite covers report validity,
+resource accounting, runner configuration and feed-download failure handling.
+The native diagnostic client has Go unit tests. Rust formatting and Clippy are
+required. CI runs Rust checks on Linux, Windows and macOS; local results alone do
+not establish qualification on all three systems.
+
+The successful lookup path and fixed-buffer benchmark response formatter do not
+allocate. HTTP parsing, connection state, compilation and feed downloads have
+separate memory costs. Development generators are outside the server resource cap.
+
+## Performance limits
+
+The real measured corpus contains 178,507 logical policies and occupies 1,889,139
+bytes. Mixed-policy packing produced substantially lower direct lookup latency
+and a smaller index on a synthetic corpus; it is not evidence of a similar gain
+for every list or for end-to-end DNS traffic.
+
+The five-minute 25,000/sec k6 test failed: 950,042 correct responses, HTTP p99
+86.23 ms and 6,549,698 dropped arrivals. The same-host generator and desktop
+contention limit interpretation. The optional polling adapter remains experimental;
+the Hyper/Tokio adapter is still the default.
+
+See [packed-policy measurements](packed-policy-optimization.md),
+[transport diagnostics](transport-diagnostics.md) and the
+[benchmark guide](../tests/load/README.md).
+
+## Remaining work
+
+Actual DNS transports and forwarding, TTL/policy-aware caching, profile identity
+and authorization, source refresh scheduling, live snapshot activation, disabled
+payload cleanup, analytics persistence, desktop/web UI, and release packaging.
+The complete installed footprint below 10 MB is a design target, not a validated
+full-product result. [Roadmap](../goal.md), [size budget](size-budget.md).

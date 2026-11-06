@@ -1,0 +1,2 @@
+! Deterministic test fixture; not a real blocklist.
+||adult.example^

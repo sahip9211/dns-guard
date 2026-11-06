@@ -1,0 +1,142 @@
+{
+  "sqlite_version": "3.54.0",
+  "storage": {
+    "directory": ".",
+    "filesystem": "btrfs"
+  },
+  "settings": {
+    "synchronous": "FULL",
+    "cache_kib": 256,
+    "checkpoint_pages": 64
+  },
+  "runs": [
+    {
+      "batch": 1,
+      "rows": 8192,
+      "seconds": 44.714473197998814,
+      "rows_per_s": 183.2068995585669,
+      "commits": 8192,
+      "commit_p99_ms": 13.283831,
+      "sampled_peak_files_bytes": 456248,
+      "file_bytes": {
+        "without_index": 155648,
+        "with_covering_index": 307200
+      },
+      "plans": {
+        "scan": [
+          "SCAN events",
+          "USE TEMP B-TREE FOR ORDER BY"
+        ],
+        "covering": [
+          "SEARCH events USING COVERING INDEX client_recent (client=? AND ts>?)"
+        ]
+      },
+      "reads": {
+        "scan": {
+          "p50_us": 2700.6265,
+          "p99_us": 4311.003
+        },
+        "covering": {
+          "p50_us": 560.724,
+          "p99_us": 1011.587
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "rows": 8192,
+      "seconds": 0.3086541060001764,
+      "rows_per_s": 26541.036845935618,
+      "commits": 32,
+      "commit_p99_ms": 18.677809,
+      "sampled_peak_files_bytes": 464488,
+      "file_bytes": {
+        "without_index": 155648,
+        "with_covering_index": 307200
+      },
+      "plans": {
+        "scan": [
+          "SCAN events",
+          "USE TEMP B-TREE FOR ORDER BY"
+        ],
+        "covering": [
+          "SEARCH events USING COVERING INDEX client_recent (client=? AND ts>?)"
+        ]
+      },
+      "reads": {
+        "scan": {
+          "p50_us": 2404.915,
+          "p99_us": 4072.324
+        },
+        "covering": {
+          "p50_us": 356.094,
+          "p99_us": 1747.41
+        }
+      }
+    },
+    {
+      "batch": 256,
+      "rows": 8192,
+      "seconds": 0.1828002900001593,
+      "rows_per_s": 44813.93328201427,
+      "commits": 32,
+      "commit_p99_ms": 9.532637,
+      "sampled_peak_files_bytes": 464488,
+      "file_bytes": {
+        "without_index": 155648,
+        "with_covering_index": 307200
+      },
+      "plans": {
+        "scan": [
+          "SCAN events",
+          "USE TEMP B-TREE FOR ORDER BY"
+        ],
+        "covering": [
+          "SEARCH events USING COVERING INDEX client_recent (client=? AND ts>?)"
+        ]
+      },
+      "reads": {
+        "scan": {
+          "p50_us": 2286.233,
+          "p99_us": 4683.198
+        },
+        "covering": {
+          "p50_us": 477.25,
+          "p99_us": 747.914
+        }
+      }
+    },
+    {
+      "batch": 1,
+      "rows": 8192,
+      "seconds": 35.59778022499995,
+      "rows_per_s": 230.12670869423604,
+      "commits": 8192,
+      "commit_p99_ms": 9.340499,
+      "sampled_peak_files_bytes": 456248,
+      "file_bytes": {
+        "without_index": 155648,
+        "with_covering_index": 307200
+      },
+      "plans": {
+        "scan": [
+          "SCAN events",
+          "USE TEMP B-TREE FOR ORDER BY"
+        ],
+        "covering": [
+          "SEARCH events USING COVERING INDEX client_recent (client=? AND ts>?)"
+        ]
+      },
+      "reads": {
+        "scan": {
+          "p50_us": 4103.971,
+          "p99_us": 8230.65
+        },
+        "covering": {
+          "p50_us": 872.221,
+          "p99_us": 2876.711
+        }
+      }
+    }
+  ]
+}

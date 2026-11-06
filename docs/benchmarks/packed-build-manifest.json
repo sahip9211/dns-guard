@@ -1,0 +1,62 @@
+{
+  "src/index.rs": {
+    "bytes": 19339,
+    "sha256": "1f42fc2dcdf1c0770dce1ceb677cc88a8ba217cea992f30f76a159b1a3ea00fc"
+  },
+  "src/lib.rs": {
+    "bytes": 4054,
+    "sha256": "416204b2556820309b656c6dd9c0e749d40d8890dcb6c318aee580c72003c290"
+  },
+  "tests/packed.rs": {
+    "bytes": 5227,
+    "sha256": "387ef906eb75f40b478ef90879099773475800bb3d2fe227c86e8854507a04fc"
+  },
+  "tests/source_selection.rs": {
+    "bytes": 3994,
+    "sha256": "8f872a73e687e119cab2b86aaa3e4278629eac7afeee0e4c8d6d49ca81cbcdaf"
+  },
+  "tests/allocations.rs": {
+    "bytes": 2236,
+    "sha256": "80710bced90b2473359f9806fa696fd6d563a7268cd044f84a785690794c6261"
+  },
+  "examples/hash_compare.rs": {
+    "bytes": 11869,
+    "sha256": "ae837a7822e5f15709c02c672ac210936dc0d5ff86f187f9857c1a6adc37e8e8"
+  },
+  "examples/repack.rs": {
+    "bytes": 4850,
+    "sha256": "3de56771c2892aac76de1716b17bdc079af0407e501d7ea9be690d19233e0c54"
+  },
+  "research/compare_matchers.py": {
+    "bytes": 2151,
+    "sha256": "ba87d689030e8ee05667a4eb18a5a8a68672c887e2d3fbd17fe4363a59b3527a"
+  },
+  "research/sqlite_batch_probe.py": {
+    "bytes": 4238,
+    "sha256": "8eaa07c7a1cbd20b94140346ac28c739933e2090acaf4d95f31fabdeeed33643"
+  },
+  "target/release/dns-guard": {
+    "bytes": 418008,
+    "sha256": "9ddee879be86445ccc0f673ba568ac556f178a4f168b326991961b1c120e3abb"
+  },
+  "target/release/examples/latency": {
+    "bytes": 383984,
+    "sha256": "57a95ada0f675b6ce5aeea54269babd82ca5da6a38367919d2a4e68d3834e868"
+  },
+  "target/release/examples/load_server_async": {
+    "bytes": 746032,
+    "sha256": "6a2713e6c4f9cefc8e78021b14cdd940e3d02631a704fcdd644259123537cd8e"
+  },
+  "/tmp/dns-guard-smoke/rules.dngi": {
+    "bytes": 1889139,
+    "sha256": "6673b4548b594d22ed6cbd1081bad2a12278080da2466ea09d1443af3068d36a"
+  },
+  "/tmp/dns-guard-packed/mixed/v1.dngi": {
+    "bytes": 2088839,
+    "sha256": "215cee026f257fcb2b64ac5e431f621337aacf7541b6008f3fdc053c2cbda92d"
+  },
+  "/tmp/dns-guard-packed/mixed/v2.dngi": {
+    "bytes": 428680,
+    "sha256": "f084f9c307b89a45cf50cb1dca07f2632b92fa59bae5a5cb3a508f6c4598edd9"
+  }
+}

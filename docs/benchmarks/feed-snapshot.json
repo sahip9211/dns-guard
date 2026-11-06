@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "inspected_at_utc": "2026-11-06T09:06:59.945241+00:00",
+  "purpose": "Research snapshots, not an enabled runtime feed configuration. Source-level categories do not classify every domain individually.",
+  "sources": [
+    {
+      "id": "hagezi-light",
+      "repository": "https://github.com/hagezi/dns-blocklists",
+      "latest_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/light.txt",
+      "snapshot_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/cf9251a426a0b6ffeeb61925ef385a76e2189cfd/adblock/light.txt",
+      "revision": "cf9251a426a0b6ffeeb61925ef385a76e2189cfd",
+      "format": "adblock_dns",
+      "category": "mixed_base_protection",
+      "declared_license": "GPL-3.0",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/cf9251a426a0b6ffeeb61925ef385a76e2189cfd/LICENSE",
+      "bytes": 2123553,
+      "sha256": "ab1e81d19334ead52eca44b153f1b60bc153b57cd4c6db89c8731b8c363393f2",
+      "noncomment_line_count": 87225,
+      "raw_snapshot_path": "/tmp/dns-stack-research/feeds/hagezi-light.txt",
+      "download_status": "complete",
+      "production_enabled": false,
+      "simple_domain_suffix_rule_count": 87225,
+      "other_rule_line_count": 0,
+      "upstream_header_metadata": [
+        "! Version: 2026.1106.0004.19"
+      ],
+      "compression_experiment": {
+        "codec": "zstd",
+        "level": 3,
+        "threads": 1,
+        "compressed_bytes": 648461,
+        "sha256": "1f07528854dc0023e8651600f1d0980e647758074a20202454a5c6115bc3f656",
+        "integrity_check": "zstd -t passed",
+        "raw_to_compressed_ratio": 3.275,
+        "compressed_path": "/tmp/dns-stack-research/feeds/hagezi-light.txt.zst"
+      }
+    },
+    {
+      "id": "hagezi-nsfw",
+      "repository": "https://github.com/hagezi/dns-blocklists",
+      "latest_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/nsfw.txt",
+      "snapshot_url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/cf9251a426a0b6ffeeb61925ef385a76e2189cfd/adblock/nsfw.txt",
+      "revision": "cf9251a426a0b6ffeeb61925ef385a76e2189cfd",
+      "format": "adblock_dns",
+      "category": "adult",
+      "declared_license": "GPL-3.0",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/cf9251a426a0b6ffeeb61925ef385a76e2189cfd/LICENSE",
+      "bytes": 1696254,
+      "sha256": "f3d29ff27bd900fc0cd23c5f51bd6ac458354956a612a2e0cc2ee38869f5b88c",
+      "noncomment_line_count": 91332,
+      "raw_snapshot_path": "/tmp/dns-stack-research/feeds/hagezi-nsfw.txt",
+      "download_status": "complete",
+      "production_enabled": false,
+      "simple_domain_suffix_rule_count": 91332,
+      "other_rule_line_count": 0,
+      "upstream_header_metadata": [
+        "! Version: 2026.1106.0040.12"
+      ],
+      "compression_experiment": {
+        "codec": "zstd",
+        "level": 3,
+        "threads": 1,
+        "compressed_bytes": 483412,
+        "sha256": "659b6d672f9548f8db11e30ebe82ec240ec4efb4106b2f4f353bc9ef95274a3b",
+        "integrity_check": "zstd -t passed",
+        "raw_to_compressed_ratio": 3.509,
+        "compressed_path": "/tmp/dns-stack-research/feeds/hagezi-nsfw.txt.zst"
+      }
+    },
+    {
+      "id": "stevenblack-base",
+      "repository": "https://github.com/StevenBlack/hosts",
+      "latest_url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+      "snapshot_url": "https://raw.githubusercontent.com/StevenBlack/hosts/6d56ab44f2b3d27de062b5194eb51bcd8115a773/hosts",
+      "revision": "6d56ab44f2b3d27de062b5194eb51bcd8115a773",
+      "format": "hosts",
+      "category": "mixed_base_protection",
+      "declared_license": "MIT; preserve upstream notices",
+      "license_url": "https://github.com/StevenBlack/hosts/blob/6d56ab44f2b3d27de062b5194eb51bcd8115a773/license.txt",
+      "bytes": 2353610,
+      "sha256": "0d81148f9990ecbde614ba1a135f81113fbb5f9972e783af22ff1c6dadb57508",
+      "noncomment_line_count": 77784,
+      "raw_snapshot_path": "/tmp/dns-stack-research/feeds/stevenblack-hosts.txt",
+      "download_status": "complete",
+      "production_enabled": false,
+      "upstream_header_metadata": [
+        "# Date: 01 November 2026 18:49:06 (UTC)",
+        "# Number of unique domains: 77,758"
+      ],
+      "compression_experiment": {
+        "codec": "zstd",
+        "level": 3,
+        "threads": 1,
+        "compressed_bytes": 552086,
+        "sha256": "78f3b730f13510f373333bf6d75119ce7ab203067aeac8decad41298bebf5ece",
+        "integrity_check": "zstd -t passed",
+        "raw_to_compressed_ratio": 4.263,
+        "compressed_path": "/tmp/dns-stack-research/feeds/stevenblack-hosts.txt.zst"
+      }
+    }
+  ],
+  "compression_tool_version": "*** Zstandard CLI (64-bit) v1.5.7, by Yann Collet ***",
+  "excluded_downloads": [
+    {
+      "id": "blocklistproject-ads",
+      "snapshot_url": "https://raw.githubusercontent.com/blocklistproject/Lists/ee3bdbaddf49c756cf3340bb2e6a9dee5282d1c6/ads.txt",
+      "status": "incomplete",
+      "reason": "Both attempts exceeded the 45-second timeout before the 6862355-byte download completed; partial files are not accepted input."
+    }
+  ]
+}

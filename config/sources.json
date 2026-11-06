@@ -1,0 +1,50 @@
+{
+  "description": "Download catalog only. No source is fetched or enabled until selected. Coverage labels describe whole feeds, not verified classifications of every domain.",
+  "sources": [
+    {
+      "id": "hagezi-light",
+      "name": "HaGeZi Light",
+      "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/light.txt",
+      "format": "adblock",
+      "coverage": ["ads", "tracking", "threats"],
+      "publisher": "https://github.com/hagezi/dns-blocklists",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/main/LICENSE"
+    },
+    {
+      "id": "hagezi-nsfw",
+      "name": "HaGeZi NSFW",
+      "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/nsfw.txt",
+      "format": "adblock",
+      "coverage": ["adult"],
+      "publisher": "https://github.com/hagezi/dns-blocklists",
+      "license_url": "https://github.com/hagezi/dns-blocklists/blob/main/LICENSE"
+    },
+    {
+      "id": "stevenblack-base",
+      "name": "StevenBlack Unified Hosts",
+      "url": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+      "format": "hosts",
+      "coverage": ["ads", "malware"],
+      "publisher": "https://github.com/StevenBlack/hosts",
+      "license_url": "https://github.com/StevenBlack/hosts/blob/master/license.txt"
+    },
+    {
+      "id": "oisd-big",
+      "name": "OISD Big",
+      "url": "https://big.oisd.nl/",
+      "format": "adblock",
+      "coverage": ["ads", "tracking", "threats"],
+      "publisher": "https://oisd.nl/",
+      "license_url": "https://oisd.nl/"
+    },
+    {
+      "id": "oisd-nsfw",
+      "name": "OISD NSFW",
+      "url": "https://nsfw.oisd.nl/",
+      "format": "adblock",
+      "coverage": ["adult", "shock", "gore"],
+      "publisher": "https://oisd.nl/",
+      "license_url": "https://oisd.nl/"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "src/index.rs": {
+    "bytes": 12168,
+    "sha256": "d7d2760b5f54ee673db1d774f0fa5d68e230e624dba7db24ca7575435e07cd15"
+  },
+  "examples/load_server_async.rs": {
+    "bytes": 8140,
+    "sha256": "ac31a7b7c0983aae581f3f9797346f7a9e541eb2e1a6bccd4866163f939bca6d"
+  },
+  "scripts/run_load.py": {
+    "bytes": 8062,
+    "sha256": "f1d318e647fe4e82e48e0d1817e7c82f15dd3a00c535bfc4205caf24ff086830"
+  },
+  "scripts/run_prepared_load.sh": {
+    "bytes": 964,
+    "sha256": "3f9d6e1366d14baffcc97eda6f10d5b9a0c090e1e4b8e1ca8680ff882060f8d1"
+  },
+  "Cargo.toml": {
+    "bytes": 877,
+    "sha256": "545a7d7ebd651bdc2c10bccefd6a342b070a58cbfe62ff5b634cc69e62694eea"
+  },
+  "Cargo.lock": {
+    "bytes": 5813,
+    "sha256": "530cfb9b3c379cfbcca50c045ad491bddd0fb2bf3cf7bead8822ca177b7bc7b7"
+  },
+  "target/release/dns-guard": {
+    "bytes": 406928,
+    "sha256": "e9139fc4de9414053412a4f842d98b5ebf95f8176e0bea4ab15ae2b6a6ca1179"
+  },
+  "target/release/examples/load_server_async": {
+    "bytes": 736752,
+    "sha256": "8ca665b614d701e1eb12f8065b3a46d30bd3159b462454ee13cc15f0d413dacf"
+  },
+  "examples/hash_compare.rs": {
+    "bytes": 11251,
+    "sha256": "0d2c09aaea6bc196638ac1a97966cb58880c0bb79265efabf4198bd5604cd1ae"
+  },
+  "target/release/examples/hash_compare": {
+    "bytes": 422784,
+    "sha256": "4ef0f5edca3bad1aa9d4e8f17a4a05a01ac02ac54317471c91274da40423aecc"
+  },
+  "scripts/test_load_defaults.py": {
+    "bytes": 1017,
+    "sha256": "9802f95a70161b8278bcd272201fdebbb9f5f779d58e7b3c263ef526c94db2d2"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "measured_at_utc": "2026-11-06T09:34:27.183434+00:00",
+  "kind": "exploratory warm single-thread FST microbenchmark; not DNS capacity or application footprint",
+  "host": {
+    "cpu": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz",
+    "architecture": "x86_64",
+    "kernel": "7.2.8-9-omarchy"
+  },
+  "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+  "dependency": {
+    "name": "fst",
+    "version": "0.4.7",
+    "crate_url": "https://static.crates.io/crates/fst/fst-0.4.7.crate",
+    "crate_sha256": "7ab85b9b05e3978cc9a9cf8fea7f01b494e1a09ed3037e16ba39edc7a29eb61a"
+  },
+  "source_sha256": "5c3202887fe520916b1514c1ce259754ed09a3e2463c4da26a38951ee51b10ba",
+  "source_inputs": [
+    "hagezi-light",
+    "hagezi-nsfw"
+  ],
+  "source_manifest": "feed-snapshot.json",
+  "limitations": [
+    "Two category bits only; full provenance/allow rules/regex/policy engine absent.",
+    "Normalization and disk/network I/O excluded from timed matching.",
+    "No cold-cache, concurrent DNS load, or 10-million-rule measurement.",
+    "Build uses in-memory prepared input; production streaming/external sorting unimplemented.",
+    "HashMap oracle and benchmark data remain allocated; no isolated runtime RSS measurement.",
+    "Queries are sampled independently in each sorted layout; timings are illustrative, not a controlled ranking."
+  ],
+  "layouts": {
+    "reversed": {
+      "unique_rules": 178507,
+      "normalized_input_bytes": 3639052,
+      "index_bytes": 1841357,
+      "bytes_per_rule": 10.3153,
+      "build_ms": 628.802,
+      "verified_exact_keys": 178507,
+      "verified_suffix_queries": 42004,
+      "positive_queries": 21035,
+      "timed_lookups": 210020,
+      "warm_lookup_p50_ns": 1309,
+      "warm_lookup_p95_ns": 3171,
+      "warm_lookup_p99_ns": 4783,
+      "index_sha256": "8593e20f9ec4eb8b170cf7fdf8ecad9227de919a1aa2f7ad4940b14145404e6f",
+      "temporary_index_path": "/tmp/dns-index-probe/reversed.fst"
+    },
+    "forward": {
+      "unique_rules": 178507,
+      "normalized_input_bytes": 3639052,
+      "index_bytes": 1908735,
+      "bytes_per_rule": 10.6928,
+      "build_ms": 769.856,
+      "verified_exact_keys": 178507,
+      "verified_suffix_queries": 42004,
+      "positive_queries": 21026,
+      "timed_lookups": 210020,
+      "warm_lookup_p50_ns": 1962,
+      "warm_lookup_p95_ns": 4493,
+      "warm_lookup_p99_ns": 6452,
+      "index_sha256": "7e397767ea992d10249e9d211cdceaa4c8d8d7fea913089732b906f44c34f0c8",
+      "temporary_index_path": "/tmp/dns-index-probe/forward.fst"
+    }
+  },
+  "source_note": "A descriptive header comment was updated after the measured run; executable logic is unchanged."
+}

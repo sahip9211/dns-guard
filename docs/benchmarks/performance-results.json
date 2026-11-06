@@ -1,0 +1,295 @@
+{
+  "recorded_at_utc": "2026-11-06T10:17:29.561953+00:00",
+  "hardware": {
+    "cpu": "Intel Core i7-10510U @ 1.80GHz",
+    "logical_cpus": 8,
+    "os": "Arch-based Omarchy Linux",
+    "rustc": "rustc 1.99.1 (58cf8f9c3 2026-10-13) (Arch Linux rust 1:1.99.1-1)",
+    "machine": "x86_64"
+  },
+  "artifacts": {
+    "binary_bytes": 404104,
+    "binary_sha256": "12a756664e44b8f89459d69cb35118e8d0432aaf31e91ca425e983e5145613de",
+    "snapshot_bytes": 1889139,
+    "snapshot_sha256": "6673b4548b594d22ed6cbd1081bad2a12278080da2466ea09d1443af3068d36a",
+    "queries_sha256": "ba46eea3351950eb4a0cf40bf12729d6d8a883fdf916d85d23633f6175995a0f",
+    "cargo_lock_sha256": "44247026d23f5f44e88d31ba2bc2c3dfa756643ab7688c0ba07f0085860f09b7",
+    "index_source_sha256": "8fc820bd52b1ccd33e84bc227e0fea4c48c02beddccf23c5d37f20447b7a2411",
+    "soak_binary_sha256": "4043a6b3c3f152d5c326013e6424353421b2963df3c2aefeb89972df137dafd4",
+    "runtime_crates": [
+      "fst 0.4.7"
+    ],
+    "dynamic_libraries": [
+      "libgcc_s.so.1",
+      "libc.so.6",
+      "Linux ELF loader"
+    ],
+    "footprint_scope": "CLI and snapshot only; not a full application or package footprint"
+  },
+  "sources": {
+    "sources": [
+      {
+        "path": "/tmp/dns-stack-research/feeds/hagezi-light.txt",
+        "sha256": "ab1e81d19334ead52eca44b153f1b60bc153b57cd4c6db89c8731b8c363393f2",
+        "rules": 87225
+      },
+      {
+        "path": "/tmp/dns-stack-research/feeds/hagezi-nsfw.txt",
+        "sha256": "f3d29ff27bd900fc0cd23c5f51bd6ac458354956a612a2e0cc2ee38869f5b88c",
+        "rules": 91332
+      }
+    ],
+    "queries": 12000
+  },
+  "compiler_baseline": {
+    "command": [
+      "target/release/dns-guard",
+      "compile",
+      "/tmp/dns-guard-smoke/rules.dngi",
+      "--other-bytes",
+      "4191015",
+      "--feed",
+      "adblock",
+      "ads",
+      "/tmp/dns-stack-research/feeds/hagezi-light.txt",
+      "--feed",
+      "adblock",
+      "adult",
+      "/tmp/dns-stack-research/feeds/hagezi-nsfw.txt"
+    ],
+    "stdout": "compiled input_rules=178557 rules=178507 bytes=1889139 output=/tmp/dns-guard-smoke/rules.dngi",
+    "seconds": 1.1446209879995877,
+    "compiler_maxrss_kib": 32524,
+    "binary_bytes": 371208,
+    "other_bytes_supplied": 4191015,
+    "index_bytes": 1889139
+  },
+  "traversal_comparison_paired_runs": [
+    {
+      "round": 0,
+      "variant": "baseline",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3286,
+      "p95_ns": 8395,
+      "p99_ns": 13356,
+      "max_ns": 1035612
+    },
+    {
+      "round": 0,
+      "variant": "optimized",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1776,
+      "p95_ns": 3959,
+      "p99_ns": 5365,
+      "max_ns": 757295
+    },
+    {
+      "round": 1,
+      "variant": "optimized",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1973,
+      "p95_ns": 4182,
+      "p99_ns": 5469,
+      "max_ns": 1239384
+    },
+    {
+      "round": 1,
+      "variant": "baseline",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 2892,
+      "p95_ns": 6945,
+      "p99_ns": 10615,
+      "max_ns": 695129
+    },
+    {
+      "round": 2,
+      "variant": "baseline",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3179,
+      "p95_ns": 7421,
+      "p99_ns": 11860,
+      "max_ns": 1304335
+    },
+    {
+      "round": 2,
+      "variant": "optimized",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1593,
+      "p95_ns": 3283,
+      "p99_ns": 4454,
+      "max_ns": 116258
+    },
+    {
+      "round": 3,
+      "variant": "optimized",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1790,
+      "p95_ns": 3932,
+      "p99_ns": 5316,
+      "max_ns": 122809
+    },
+    {
+      "round": 3,
+      "variant": "baseline",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 2833,
+      "p95_ns": 5972,
+      "p99_ns": 9349,
+      "max_ns": 44418
+    }
+  ],
+  "optimization_profile_comparison": [
+    {
+      "round": 0,
+      "variant": "size",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1858,
+      "p95_ns": 4170,
+      "p99_ns": 5636,
+      "max_ns": 1291056
+    },
+    {
+      "round": 0,
+      "variant": "speed",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1677,
+      "p95_ns": 3598,
+      "p99_ns": 4993,
+      "max_ns": 184424
+    },
+    {
+      "round": 1,
+      "variant": "speed",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1899,
+      "p95_ns": 4458,
+      "p99_ns": 6236,
+      "max_ns": 108606
+    },
+    {
+      "round": 1,
+      "variant": "size",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1691,
+      "p95_ns": 3566,
+      "p99_ns": 4904,
+      "max_ns": 176898
+    },
+    {
+      "round": 2,
+      "variant": "size",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1933,
+      "p95_ns": 4427,
+      "p99_ns": 6309,
+      "max_ns": 301554
+    },
+    {
+      "round": 2,
+      "variant": "speed",
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 1674,
+      "p95_ns": 3752,
+      "p99_ns": 5202,
+      "max_ns": 684167
+    }
+  ],
+  "direct_engine_soak": {
+    "kind": "direct-engine",
+    "duration_s": 300.003473,
+    "workers": 4,
+    "rules": 178507,
+    "lookups": 742130944,
+    "lookups_per_s": 2473741.175,
+    "errors": 0,
+    "error_rate": 0.0,
+    "p50_ms": 0.001299,
+    "p95_ms": 0.003099,
+    "p99_ms": 0.004299,
+    "max_ms": 87.6669,
+    "histogram_resolution_ns": 100,
+    "histogram_overflow_samples": 525,
+    "resource_measurement": {
+      "command": [
+        "target/release/examples/soak",
+        "/tmp/dns-guard-smoke/rules.dngi",
+        "/tmp/dns-guard-smoke/queries.tsv",
+        "300",
+        "4"
+      ],
+      "exit_code": 0,
+      "resources": {
+        "samples": 301,
+        "sampled_duration_s": 300.23123492299965,
+        "logical_cpus": 8,
+        "cpu_mean_percent_one_core": 378.79136735778695,
+        "cpu_peak_sampled_percent_one_core": 397.801101438406,
+        "cpu_mean_percent_machine": 47.34892091972337,
+        "rss_peak_sampled_bytes": 7856128,
+        "rss_mean_sampled_bytes": 6058052.03986711
+      }
+    },
+    "rss_peak_sampled_mib": 7.4921875,
+    "rss_mean_sampled_mib": 5.777408637873754,
+    "sample_file": "performance-samples.csv"
+  },
+  "k6": {
+    "version": "2.3.0",
+    "inspect_passed": [
+      "15m constant-arrival-rate, 2500 req/s, 200 VUs",
+      "15m constant-vus, 2000 VUs"
+    ],
+    "load_status": "blocked_by_environment",
+    "completed": false,
+    "reason": "Socket creation denied with EPERM for both server bind and k6 HTTP connection",
+    "attempt_exit_code": 107,
+    "http_p99_ms": null,
+    "handled_requests_per_s": null,
+    "http_error_rate": null
+  },
+  "validation": {
+    "rust_tests_passed": 22,
+    "python_tests_passed": 2,
+    "fmt_check": "passed",
+    "clippy_warnings_denied": "passed",
+    "valid_checks_without_heap_allocation": 40000,
+    "cross_platform_ci": "configured but not executed"
+  },
+  "limitations": [
+    "Direct soak measures in-process lookups, not HTTP/DNS requests.",
+    "Four workers run at saturation with preloaded index and 12000 repeated queries.",
+    "CPU: 100 percent is one logical core; machine-relative CPU divides by 8.",
+    "One-second sampled RSS includes benchmark query corpus, histograms, index and process overhead; peaks between samples can be missed.",
+    "Histogram percentiles are 100ns bucket upper bounds; >=10ms samples use an overflow bin.",
+    "No CPU affinity or frequency pinning; lightweight documentation/tool activity continued, unrelated host processes uncontrolled.",
+    "k6 tests cannot execute network traffic in this environment; no HTTP capacity numbers were measured."
+  ]
+}

@@ -1,0 +1,173 @@
+{
+  "kind": "alternating-direct-prefix-comparison",
+  "pinned_logical_cpu": 7,
+  "note": "Affinity fixed, CPU not isolated; unrelated desktop activity remains.",
+  "runs": [
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 2977,
+      "p95_ns": 6450,
+      "p99_ns": 9207,
+      "max_ns": 12054944,
+      "pair": 0,
+      "variant": "before"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3198,
+      "p95_ns": 7104,
+      "p99_ns": 11815,
+      "max_ns": 7963235,
+      "pair": 0,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3087,
+      "p95_ns": 7280,
+      "p99_ns": 10921,
+      "max_ns": 9548463,
+      "pair": 1,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3892,
+      "p95_ns": 7733,
+      "p99_ns": 11797,
+      "max_ns": 9430692,
+      "pair": 1,
+      "variant": "before"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 2816,
+      "p95_ns": 6328,
+      "p99_ns": 8948,
+      "max_ns": 1884155,
+      "pair": 2,
+      "variant": "before"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 2981,
+      "p95_ns": 6609,
+      "p99_ns": 9356,
+      "max_ns": 5328841,
+      "pair": 2,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3278,
+      "p95_ns": 7092,
+      "p99_ns": 10438,
+      "max_ns": 1536253,
+      "pair": 3,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3936,
+      "p95_ns": 7735,
+      "p99_ns": 11671,
+      "max_ns": 688327,
+      "pair": 3,
+      "variant": "before"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 4111,
+      "p95_ns": 9018,
+      "p99_ns": 24688,
+      "max_ns": 14419311,
+      "pair": 4,
+      "variant": "before"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3872,
+      "p95_ns": 8516,
+      "p99_ns": 14564,
+      "max_ns": 17087733,
+      "pair": 4,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3929,
+      "p95_ns": 9291,
+      "p99_ns": 24160,
+      "max_ns": 16234950,
+      "pair": 5,
+      "variant": "prefix"
+    },
+    {
+      "queries": 12000,
+      "samples": 120000,
+      "index_bytes": 1889139,
+      "p50_ns": 3505,
+      "p95_ns": 8100,
+      "p99_ns": 13080,
+      "max_ns": 9077191,
+      "pair": 5,
+      "variant": "before"
+    }
+  ],
+  "files": {
+    "before": {
+      "path": "/tmp/dns-guard-dataflow-before/latency",
+      "bytes": 367720,
+      "sha256": "b4431f0c6e9026bbe43b19335008ad0ba5d03b3d445d345d7b77959d70976ab9"
+    },
+    "prefix": {
+      "path": "/tmp/dns-guard-dataflow-prefix/latency",
+      "bytes": 374640,
+      "sha256": "78ec0b3b563bd7ba9f600f53f796b4733135706df013704764007e242d79222a"
+    },
+    "index": {
+      "path": "/tmp/dns-guard-smoke/rules.dngi",
+      "bytes": 1889139,
+      "sha256": "6673b4548b594d22ed6cbd1081bad2a12278080da2466ea09d1443af3068d36a"
+    },
+    "queries": {
+      "path": "/tmp/dns-guard-smoke/queries.tsv",
+      "bytes": 310335,
+      "sha256": "ba46eea3351950eb4a0cf40bf12729d6d8a883fdf916d85d23633f6175995a0f"
+    }
+  },
+  "median_of_runs": {
+    "before": {
+      "p50_ns": 3698.5,
+      "p95_ns": 7734.0,
+      "p99_ns": 11734.0
+    },
+    "prefix": {
+      "p50_ns": 3238.0,
+      "p95_ns": 7192.0,
+      "p99_ns": 11368.0
+    }
+  }
+}

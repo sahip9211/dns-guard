@@ -1,0 +1,3 @@
+! Deterministic test fixture; not a real blocklist.
+||ads.example^
+@@||safe.ads.example^

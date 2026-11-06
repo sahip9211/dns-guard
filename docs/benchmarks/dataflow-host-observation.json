@@ -1,0 +1,15 @@
+{
+  "observed_at_utc": "2026-11-06T11:34:42.104955+00:00",
+  "cpu_frequency_khz": {
+    "cpu7": 799987,
+    "cpu5": 799974,
+    "cpu3": 800014,
+    "cpu1": 800006,
+    "cpu6": 800017,
+    "cpu4": 795656,
+    "cpu2": 794810,
+    "cpu0": 771465
+  },
+  "cpu_pressure": "some avg10=56.13 avg60=50.71 avg300=35.98 total=1134334231\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+  "note": "One observation during HTTP matrix. Frequencies not pinned; cause not diagnosed; system settings unchanged."
+}
