@@ -23,7 +23,7 @@ if __name__ == '__main__':
         script = '''
 set -eu
 printf '%s' 'synthetic-ci-keyring-only' | gnome-keyring-daemon --unlock --components=secrets >/dev/null
-exec cargo test --test keyring_native --locked -- --ignored --nocapture
+exec cargo test --test keyring_native --locked -- --ignored --nocapture --test-threads=1
 '''
         result = subprocess.run(['dbus-run-session', '--', 'sh', '-c', script], env=env,
                                 cwd=pathlib.Path(__file__).resolve().parents[2], timeout=180)

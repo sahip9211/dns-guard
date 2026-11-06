@@ -38,7 +38,8 @@ impl Drop for Fixture {
 
 #[test]
 #[ignore = "requires an unlocked OS store; use an isolated test keychain/session"]
-fn native_keyring_cli_roundtrip_and_cross_instance_rejection() {
+fn native_keyring_roundtrip_and_cross_instance_rejection() {
+    eprintln!("native API: creating isolated entries");
     let first = DataKey::create_in_keyring().unwrap();
     let root = std::env::temp_dir().join(format!("dns-native-keyring-{first}"));
     let mut f = Fixture {
@@ -60,31 +61,21 @@ fn native_keyring_cli_roundtrip_and_cross_instance_rejection() {
         index_path: f.root.join("rules.dngi"),
         dns: ServerConfig::default(),
     };
+    eprintln!("native API: reading and validating keys");
     let key = DataKey::read_keyring(&first).unwrap();
     drop(ConfigStore::create(&database, &settings, &key).unwrap());
     let before = fs::read(&database).unwrap();
     assert!(ConfigStore::open(&database, &DataKey::read_keyring(&second).unwrap()).is_err());
     assert_eq!(fs::read(&database).unwrap(), before);
-    let binary = env!("CARGO_BIN_EXE_dns-guard");
-    let good = Command::new(binary)
-        .args(["config", "show"])
-        .arg(&database)
-        .args(["--keyring", &first])
-        .output()
-        .unwrap();
-    assert!(
-        good.status.success(),
-        "{}",
-        String::from_utf8_lossy(&good.stderr)
+    assert_eq!(
+        ConfigStore::open(&database, &DataKey::read_keyring(&first).unwrap())
+            .unwrap()
+            .load()
+            .unwrap()
+            .settings,
+        settings
     );
-    assert!(String::from_utf8_lossy(&good.stdout).contains("revision=1"));
-    let wrong = Command::new(binary)
-        .args(["config", "show"])
-        .arg(&database)
-        .args(["--keyring", &second])
-        .output()
-        .unwrap();
-    assert!(!wrong.status.success());
+    eprintln!("native API: deletion and malformed-key checks");
     entry(&first).delete_credential().unwrap();
     assert!(DataKey::read_keyring(&first).is_err());
     assert!(matches!(
@@ -96,4 +87,69 @@ fn native_keyring_cli_roundtrip_and_cross_instance_rejection() {
     entry(&second).set_secret(b"invalid-key").unwrap();
     assert!(DataKey::read_keyring(&second).is_err());
     assert_eq!(entry(&second).get_secret().unwrap(), b"invalid-key");
+}
+
+#[test]
+#[ignore = "requires an unlocked OS store; use an isolated test keychain/session"]
+fn native_cli_creates_and_reuses_its_own_credential() {
+    // macOS may require user authorization when a different executable reads
+    // an entry. Exercise repeated CLI access with the creating executable;
+    // the API test above independently exercises the library test executable.
+    let binary = env!("CARGO_BIN_EXE_dns-guard");
+    eprintln!("native CLI: generating its own key");
+    let output = Command::new(binary)
+        .args(["config", "keygen", "--keyring"])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let id = String::from_utf8(output.stdout).unwrap().trim().to_owned();
+    assert_eq!(id.len(), 32);
+    assert!(id.bytes().all(|b| b.is_ascii_hexdigit()));
+    let f = Fixture {
+        root: std::env::temp_dir().join(format!("dns-keyring-cli-{id}")),
+        ids: vec![id.clone()],
+    };
+    fs::create_dir(&f.root).unwrap();
+    let feed = f.root.join("fixture.txt");
+    let index = f.root.join("rules.dngi");
+    let database = f.root.join("settings.sqlite");
+    fs::write(&feed, "blocked.example\n").unwrap();
+    let compiled = Command::new(binary)
+        .arg("compile")
+        .arg(&index)
+        .args(["--other-bytes", "1000000", "--feed", "domains", "ads"])
+        .arg(&feed)
+        .output()
+        .unwrap();
+    assert!(compiled.status.success());
+    eprintln!("native CLI: initializing encrypted configuration");
+    let init = Command::new(binary)
+        .args(["config", "init"])
+        .arg(&database)
+        .arg(&index)
+        .args(["--keyring", &id, "--upstream", "192.0.2.1:53"])
+        .output()
+        .unwrap();
+    assert!(
+        init.status.success(),
+        "{}",
+        String::from_utf8_lossy(&init.stderr)
+    );
+    let good = Command::new(binary)
+        .args(["config", "show"])
+        .arg(&database)
+        .args(["--keyring", &id])
+        .output()
+        .unwrap();
+    assert!(
+        good.status.success(),
+        "{}",
+        String::from_utf8_lossy(&good.stderr)
+    );
+    assert!(String::from_utf8_lossy(&good.stdout).contains("revision=1"));
+    eprintln!("native CLI: deleting its synthetic fixture");
 }

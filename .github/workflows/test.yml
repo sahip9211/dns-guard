@@ -31,15 +31,16 @@ jobs:
       - name: Windows native credential library
         if: runner.os == 'Windows'
         timeout-minutes: 3
-        run: cargo +stable test --test keyring_native --locked -- --ignored
+        run: cargo +stable test --test keyring_native --locked -- --ignored --nocapture --test-threads=1
       - name: macOS native credential library
         if: runner.os == 'macOS'
         timeout-minutes: 3
         run: |
           security create-keychain -p synthetic-ci-only "$RUNNER_TEMP/dns-guard-ci.keychain-db"
-          security default-keychain -s "$RUNNER_TEMP/dns-guard-ci.keychain-db"
+          security list-keychains -d user -s "$RUNNER_TEMP/dns-guard-ci.keychain-db"
+          security default-keychain -d user -s "$RUNNER_TEMP/dns-guard-ci.keychain-db"
           security unlock-keychain -p synthetic-ci-only "$RUNNER_TEMP/dns-guard-ci.keychain-db"
-          cargo +stable test --test keyring_native --locked -- --ignored
+          cargo +stable test --test keyring_native --locked -- --ignored --nocapture --test-threads=1
       - name: Remove macOS test keychain
         if: always() && runner.os == 'macOS'
         run: security delete-keychain "$RUNNER_TEMP/dns-guard-ci.keychain-db"
