@@ -1,13 +1,24 @@
 #![forbid(unsafe_code)]
 use dns_guard::{Budget, Category, FeedFormat, Index, Limits, compile, parse_feed};
-use std::{fs::File, io::Read, path::Path};
+use std::{fs::File, io::Read, path::Path, sync::Arc, time::Duration};
 
 const CEILING: u64 = 10_000_000;
-const HELP: &str = "dns-guard — offline domain policy compiler (no DNS listener yet)
+const HELP: &str = "dns-guard — compact DNS filtering prototype
 
   dns-guard compile OUTPUT --other-bytes N --feed FORMAT CATEGORIES INPUT [--feed ...]
   dns-guard check INDEX CATEGORIES DOMAIN [DOMAIN ...]
   dns-guard inspect INDEX
+  dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
+
+Serve options:
+  --listen IP:PORT          UDP and TCP listener (default 127.0.0.1:5353)
+  --allow-client CIDR       Repeatable; replaces the default loopback-only ACL
+  --categories CATEGORIES   Default all
+  --max-inflight N          Outstanding queries, default 64, maximum 4096
+  --max-tcp-connections N   TCP clients, default 32, maximum 1024
+  --timeout-ms N           Whole upstream exchange deadline, default 2000
+
+The listener uses one runtime thread. No OS DNS settings are changed.
 
 FORMAT: domains | hosts | adblock
 CATEGORIES: comma-separated ads,adult,malware,tracking,phishing,gambling,social; or all
@@ -36,6 +47,7 @@ fn run() -> CliResult<()> {
         "--help" | "-h" | "help" => println!("{HELP}"),
         "--version" => println!("dns-guard {}", env!("CARGO_PKG_VERSION")),
         "compile" => compile_command(&args[1..])?,
+        "serve" => serve_command(&args[1..])?,
         "check" if args.len() >= 4 => {
             let enabled = categories(&args[2])?;
             let index = Index::load(Path::new(&args[1]), Limits::default().max_index_bytes)?;
@@ -61,7 +73,8 @@ fn run() -> CliResult<()> {
         "inspect" if args.len() == 2 => {
             let index = Index::load(Path::new(&args[1]), Limits::default().max_index_bytes)?;
             println!(
-                "format=1 rules={} bytes={}",
+                "format={} rules={} bytes={}",
+                index.format_version(),
                 index.rule_count(),
                 index.as_bytes().len()
             );
@@ -69,6 +82,68 @@ fn run() -> CliResult<()> {
         _ => return Err(HELP.into()),
     }
     Ok(())
+}
+
+fn serve_command(args: &[String]) -> CliResult<()> {
+    use dns_guard::server::{Server, ServerConfig};
+    let input = args
+        .first()
+        .ok_or("serve requires INDEX and --upstream IP:PORT")?;
+    let mut config = ServerConfig::default();
+    let mut seen = std::collections::HashSet::new();
+    let mut clients = Vec::new();
+    let (options, remainder) = args[1..].as_chunks::<2>();
+    for option in options {
+        let key = option[0].as_str();
+        let value = &option[1];
+        if key != "--allow-client" && !seen.insert(key) {
+            return Err(format!("duplicate serve option: {key}").into());
+        }
+        match key {
+            "--listen" => config.listen = value.parse()?,
+            "--upstream" => config.upstream = value.parse()?,
+            "--allow-client" => clients.push(value.parse()?),
+            "--categories" => config.categories = categories(value)?,
+            "--max-inflight" => config.max_inflight = value.parse()?,
+            "--max-tcp-connections" => config.max_tcp_connections = value.parse()?,
+            "--timeout-ms" => config.timeout = Duration::from_millis(value.parse()?),
+            _ => return Err(format!("unknown serve option: {key}").into()),
+        }
+    }
+    if !remainder.is_empty() || !seen.contains("--upstream") {
+        return Err("serve requires complete options and an explicit --upstream IP:PORT".into());
+    }
+    if !clients.is_empty() {
+        config.allowed_clients = clients;
+    }
+    let index = Arc::new(Index::load(
+        Path::new(input),
+        Limits::default().max_index_bytes,
+    )?);
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()?
+        .block_on(async move {
+            let server = Server::bind(config, index).await?;
+            let stats = server.stats();
+            // Install termination handlers before announcing readiness.
+            #[cfg(unix)]
+            let mut terminate =
+                tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
+            let stop = async move {
+                #[cfg(unix)]
+                tokio::select! { _ = tokio::signal::ctrl_c() => {}, _ = terminate.recv() => {} }
+                #[cfg(not(unix))]
+                let _ = tokio::signal::ctrl_c().await;
+            };
+            eprintln!(
+                "DNS listening on {} (UDP/TCP, workers=1)",
+                server.local_addr()?
+            );
+            server.run(stop).await?;
+            eprintln!("DNS stopped: {:?}", stats.snapshot());
+            Ok::<(), Box<dyn std::error::Error>>(())
+        })
 }
 
 fn compile_command(args: &[String]) -> CliResult<()> {

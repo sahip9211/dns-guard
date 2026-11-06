@@ -1,9 +1,15 @@
 # Implementation status
 
-DNS Guard is a policy-engine prototype. It does not yet provide a network DNS
-resolver, desktop/web administration, persistent analytics or a background updater.
+DNS Guard is a DNS filtering prototype with UDP/TCP forwarding. It does not yet
+provide caching, desktop/web administration, persistent analytics or a background
+updater.
 
 ## Implemented
+
+- Bounded UDP/TCP DNS service with client CIDR allowlists, category filtering,
+  CNAME target checks, upstream reply correlation, deadlines and TCP fallback.
+- One-thread CLI runtime with explicit upstream configuration, signal shutdown
+  and aggregate counters; no query names are logged.
 
 - Strict hostname validation and normalization; explicit category masks.
 - Exact, domain-and-descendant, and descendant-only matching.
@@ -20,7 +26,7 @@ resolver, desktop/web administration, persistent analytics or a background updat
 
 ## Validation
 
-The current Rust suite contains 41 tests. The Python suite covers report validity,
+The Rust suite includes policy, protocol, forwarding, overload and shutdown tests. The Python suite covers report validity,
 resource accounting, runner configuration and feed-download failure handling.
 The native diagnostic client has Go unit tests. Rust formatting and Clippy are
 required. CI runs Rust checks on Linux, Windows and macOS; local results alone do
@@ -42,13 +48,13 @@ The five-minute 25,000/sec k6 test failed: 950,042 correct responses, HTTP p99
 contention limit interpretation. The optional polling adapter remains experimental;
 the Hyper/Tokio adapter is still the default.
 
-See [packed-policy measurements](packed-policy-optimization.md),
+See [DNS service](dns-service.md), [packed-policy measurements](packed-policy-optimization.md),
 [transport diagnostics](transport-diagnostics.md) and the
 [benchmark guide](../tests/load/README.md).
 
 ## Remaining work
 
-Actual DNS transports and forwarding, TTL/policy-aware caching, profile identity
+Encrypted DNS, upstream pooling/failover, TTL/policy-aware caching, profile identity
 and authorization, source refresh scheduling, live snapshot activation, disabled
 payload cleanup, analytics persistence, desktop/web UI, and release packaging.
 The complete installed footprint below 10 MB is a design target, not a validated

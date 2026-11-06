@@ -1,11 +1,12 @@
 //! Exact, immutable domain policy indexes shared by all client profiles.
 //!
-//! DNS transport, authentication, feed downloads and a UI are separate future layers.
+//! A bounded DNS forwarding service is available in [`server`].
 #![forbid(unsafe_code)]
 
 mod domain;
 mod feeds;
 mod index;
+pub mod server;
 mod storage;
 
 pub use feeds::{FeedFormat, parse_feed};

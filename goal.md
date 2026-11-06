@@ -1,8 +1,9 @@
 # Product goal: compact DNS protection for desktops and networks
 
 Updated: 2026-11-06. Status: implementation started with tests first. The Rust
-policy library, offline compiler, atomic snapshots, CLI, and performance harnesses
-are implemented. DNS transport, database, UI and platform packages remain planned.
+policy library, offline compiler, atomic snapshots, CLI, bounded UDP/TCP DNS
+forwarding and performance harnesses are implemented. Encrypted DNS, caching,
+database, UI and platform packages remain planned.
 See [implementation status and measurements](docs/implementation-status.md).
 
 Build a self-hosted DNS filtering application for homes, offices, and companies, with a native desktop application and the same administration interface available in a browser. Prioritize low memory use, low tail latency, small installation size, and reliable operation on modest hardware. Support thousands of devices through a shared network service.
@@ -66,6 +67,9 @@ Do not present estimated app usage as observed fact. IP/MAC/hostname identity ca
 P0 is the first usable release, including desktop and browser interfaces. P1 is required before describing the product as ready for general business deployment. P2 is optional advanced scope. Unchecked items are planned, not implemented.
 
 ### DNS and reliability
+
+The first bounded UDP/TCP forwarding implementation is available; the combined
+requirements below remain incomplete. See [service scope](docs/dns-service.md).
 
 - [ ] **P0** UDP and TCP DNS listeners, IPv4 and IPv6, correct truncation and TCP fallback, EDNS handling, and transparent support for modern record types including HTTPS/SVCB.
 - [ ] **P0** Upstreams over UDP/TCP, DoT, and DoH; certificate verification, bootstrap resolution without resolver loops, deadlines, connection reuse, health checks, and failover.

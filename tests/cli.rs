@@ -83,3 +83,67 @@ fn cli_requires_explicit_budget_and_rejects_invalid_arguments() {
         assert!(!result.stderr.is_empty());
     }
 }
+
+#[test]
+fn inspect_reports_the_actual_snapshot_version() {
+    use dns_guard::{Action, Category, Limits, Rule, Scope, compile};
+    let path = std::env::temp_dir().join(format!("dns-guard-inspect-{}.dngi", std::process::id()));
+    let index = compile(
+        &[
+            Rule::new("ads.example", Scope::Domain, Action::Block, Category::ADS).unwrap(),
+            Rule::new(
+                "safe.ads.example",
+                Scope::Domain,
+                Action::Allow,
+                Category::ADS,
+            )
+            .unwrap(),
+        ],
+        Limits::default(),
+    )
+    .unwrap();
+    fs::write(&path, index.as_bytes()).unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_dns-guard"))
+        .args(["inspect", path.to_str().unwrap()])
+        .output()
+        .unwrap();
+    fs::remove_file(path).unwrap();
+    assert!(result.status.success());
+    assert!(String::from_utf8_lossy(&result.stdout).contains("format=2"));
+}
+
+#[test]
+fn serve_requires_explicit_upstream_and_rejects_duplicate_options() {
+    let binary = env!("CARGO_BIN_EXE_dns-guard");
+    for args in [
+        vec!["serve", "missing.dngi"],
+        vec![
+            "serve",
+            "missing.dngi",
+            "--upstream",
+            "127.0.0.1:53",
+            "--upstream",
+            "127.0.0.1:54",
+        ],
+        vec![
+            "serve",
+            "missing.dngi",
+            "--upstream",
+            "127.0.0.1:53",
+            "--max-inflight",
+            "0",
+        ],
+    ] {
+        assert_eq!(
+            Command::new(binary)
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .code(),
+            Some(2)
+        );
+    }
+    let result = Command::new(binary).arg("--help").output().unwrap();
+    assert!(String::from_utf8_lossy(&result.stdout).contains("dns-guard serve"));
+}

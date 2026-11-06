@@ -132,13 +132,61 @@ impl Index {
         self.logical_count
     }
 
+    pub fn format_version(&self) -> u8 {
+        if self.packed { 2 } else { 1 }
+    }
+
     /// No heap allocation, database lookup, lock or probabilistic decision.
     /// Broad allows apply to their category across all ordinary matching blocks;
     /// enforced blocks win. More-specific ordinary blocks do not beat an allow.
     pub fn check(&self, domain: &str, enabled: u32) -> Result<Decision> {
         validate_categories(enabled)?;
         let domain = Domain::parse(domain)?;
-        let domain = domain.as_bytes();
+        self.check_canonical(domain.as_bytes(), enabled)
+    }
+
+    /// Match raw DNS labels without treating embedded dots or arbitrary label
+    /// bytes as hostname separators. Non-hostname labels cannot match a rule,
+    /// but valid ancestor rules still apply (for example to SRV names).
+    pub fn check_dns_labels<'a>(
+        &self,
+        labels: impl IntoIterator<Item = &'a [u8]>,
+        enabled: u32,
+    ) -> Result<Decision> {
+        validate_categories(enabled)?;
+        let mut bytes = [0_u8; 253];
+        let mut len = 0;
+        for label in labels {
+            let separator = usize::from(len != 0);
+            if label.is_empty() || label.len() > 63 || len + separator + label.len() > bytes.len() {
+                return Err(Error::new("invalid DNS label length"));
+            }
+            if separator != 0 {
+                bytes[len] = b'.';
+                len += 1;
+            }
+            for &byte in label {
+                bytes[len] = if byte.is_ascii_alphanumeric() || byte == b'-' {
+                    byte.to_ascii_lowercase()
+                } else {
+                    b'!'
+                };
+                len += 1;
+            }
+        }
+        // No compiled hostname ends in a non-alphanumeric byte, or has a
+        // non-hostname byte immediately before its final character. This also
+        // keeps the dense two-byte jump table inside its hostname alphabet.
+        if len == 0
+            || !bytes[len - 1].is_ascii_alphanumeric()
+            || (len >= 2 && bytes[len - 2] == b'!')
+        {
+            return Ok(Decision::default());
+        }
+        self.check_canonical(&bytes[..len], enabled)
+    }
+
+    fn check_canonical(&self, domain: &[u8], enabled: u32) -> Result<Decision> {
         if enabled == 0 {
             return Ok(Decision::default());
         }

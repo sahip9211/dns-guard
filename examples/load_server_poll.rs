@@ -269,11 +269,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         Err(e) => return Err(e.into()),
                     }
                 }
-            } else if let Some(c) = connections.get_mut(&event.token()) {
-                if !c.queued {
-                    c.queued = true;
-                    ready.push_back(event.token());
-                }
+            } else if let Some(c) = connections.get_mut(&event.token())
+                && !c.queued
+            {
+                c.queued = true;
+                ready.push_back(event.token());
             }
         }
         // Fair bounded work: at most 256 ready connections, 16 replies each.

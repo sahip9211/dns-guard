@@ -12,6 +12,7 @@ and `results/`, both ignored by Git.
 | `python3 -m tools.bench.compare_matchers` | Alternate direct matcher binaries with artifact hashes |
 | `python3 -m tools.bench.process_metrics` | Measure a standalone process on Linux |
 | `python3 -m tools.bench.sqlite_probe` | Separate SQLite batching/index experiment on Linux |
+| `python3 -m tools.bench.dns_probe` | Closed-loop blocked-UDP diagnostic with latency and process metrics |
 | `python3 -m tools.bench.run_native` | Supplementary native HTTP diagnostic under the same server caps |
 
 `load_report.py`, `process_metrics.py` and `resource_budget.py` share the tested
@@ -52,3 +53,20 @@ This Linux wrapper needs a delegated systemd user cgroup. The client uses 1 ms
 arrival batches, checks every response, and reports missed work. Its result is a
 diagnostic, **not a k6 acceptance pass**. See the [benchmark guide](../tests/load/README.md)
 and [transport notes](../docs/transport-diagnostics.md).
+
+## DNS diagnostic
+
+With a running DNS service whose index blocks `ads.example`:
+
+```sh
+python3 -m tools.bench.dns_probe --address 127.0.0.1:5353 \
+  --duration 60 --clients 32 --output results/dns/report.json
+```
+
+Add `--pid PID` on Linux to sample server CPU/RSS. The generator is sampled
+separately. Every successful reply must have the original ID/question and an
+empty REFUSED response. The fixed histogram reports upper bounds in 1 µs bins;
+percentiles above its 100 ms range are null, with overflow count and maximum
+reported. This is a closed-loop blocked-query diagnostic, not an offered-arrival
+capacity result or a substitute for k6. Forwarding correctness uses local mock
+upstreams in `tests/dns_server.rs`; upstream network latency needs its own workload.

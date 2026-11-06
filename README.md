@@ -3,13 +3,14 @@
 A compact, exact DNS policy engine in Rust, designed as the foundation for a
 self-hosted filtering service with desktop and browser administration.
 
-**Early development:** the library, offline compiler and command-line tools work.
-DNS forwarding, the administration UI, scheduled feed refresh and production
-packages are not implemented. The complete application has not yet met its size
+**Early development:** the policy engine, compiler and bounded UDP/TCP DNS
+forwarder work. The administration UI, cache, scheduled feed refresh and
+production packages are not implemented. The complete application has not yet met its size
 or throughput goals.
 
 ## What works
 
+- UDP/TCP DNS filtering, upstream TCP fallback, client network allowlists and bounded concurrency.
 - Exact hostname and subdomain matching with compressed immutable FST indexes.
 - Category-scoped block, allow and enforced-block policies.
 - Selected-source compilation that preserves overlapping contributions.
@@ -17,12 +18,12 @@ or throughput goals.
 - Allocation-free successful matching and fixed-buffer benchmark responses.
 - Tests for policy semantics, independent oracles, corruption, limits and concurrency.
 
-The production library/CLI depends only on `fst`. HTTP servers and load generators
-are development tools and are not included in the runtime package.
+The runtime uses `fst`, Hickory protocol parsing, Tokio and `ipnet`. HTTP benchmark
+adapters and load generators are development tools, excluded from the runtime.
 
 ## Build and test
 
-Use stable Rust with Cargo. Python 3.10+ is needed for the optional feed and
+Use stable Rust (1.88 or newer) with Cargo. Python 3.10+ is needed for the optional feed and
 benchmark tools. Go 1.22+ is needed only for the native diagnostic client.
 
 ```sh
@@ -49,6 +50,20 @@ mkdir -p .cache
 example reservation above is illustrative. Publication refuses an update when
 `other + old index + staged index >= 10,000,000` bytes. This does not establish
 that the eventual UI, resolver, history and update data fit together.
+
+## Run DNS filtering
+
+After compiling the example index above:
+
+```sh
+./target/release/dns-guard serve .cache/example.dngi --upstream 127.0.0.1:53
+```
+
+This listens on `127.0.0.1:5353` over UDP and TCP, using an explicitly configured
+upstream. It does not alter system DNS. The default client access list permits
+loopback only. A LAN deployment needs an explicit listening address and permitted
+client networks. See [DNS service](docs/dns-service.md) for limits, options,
+shutdown, counter definitions and current protocol limitations.
 
 ## Fetch blocklists
 

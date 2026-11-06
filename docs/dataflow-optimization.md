@@ -165,7 +165,9 @@ faster than its alternatives on the basis of these laptop screens.
 | Async test executable | 725,264 bytes | 736,752 bytes |
 | Real policy snapshot | 1,889,139 bytes | 1,889,139 bytes |
 
-The CLI's only normal dependency remains `fst`; Hyper/Tokio are dev-only. Hyper
+At this historical checkpoint, the CLI's only normal dependency was `fst`;
+Hyper/Tokio were dev-only. The newer [DNS service](dns-service.md) includes Tokio
+and Hickory at runtime. Hyper
 1.12 removes `futures-channel` and `pin-utils` from this resolved graph, but its
 test executable is 4,216 bytes larger than the otherwise equivalent Hyper 1.7
 candidate. This is a measured size cost, not a smaller-binary claim.

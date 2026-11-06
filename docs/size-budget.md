@@ -16,12 +16,17 @@ RAM is a separate constrained resource, measured through process and system memo
 
 No complete application currently meets this limit. The strict cap is a feasibility objective, not an achieved property.
 
-Latest implementation checkpoint: the Linux policy CLI is 400,296 bytes and a 178,507-rule
-snapshot is 1,889,139 bytes. Their combined 2,289,435 bytes exclude the remaining
-application features, notices, retained inputs and any added runtime dependencies.
-The update publisher now gates `other bytes + old index + staged index` against
-the strict ceiling, using a caller-supplied inventory. This is a partial component
-measurement, not a complete package audit. See [implementation status](implementation-status.md).
+Latest implementation checkpoint: the Linux CLI including UDP/TCP forwarding is
+1,019,376 bytes. A current HaGeZi Light feed plus synthetic test rules compiles to
+1,018,122 bytes for 87,812 logical policies, giving 2,037,498 bytes for these two
+artifacts. This differs from the earlier 178,507-rule corpus and is not a compression
+comparison. UI, analytics, retained feeds, notices and other installed state are
+outside that pair. The complete-product target is still unproven.
+
+The update publisher gates `other bytes + old index + staged index` against the
+strict ceiling using a caller-supplied inventory. See the
+[DNS checkpoint](benchmarks/dns-service-udp.json) and
+[implementation status](implementation-status.md).
 
 - We fetched three representative feeds and compressed their combined **6,173,417 bytes to 1,683,959 bytes** with Zstandard level 3. Integrity checks passed. These are compressed text inputs, not the final searchable indexes or a complete app. [Recorded experiment](benchmarks/feed-snapshot.json).
 - A standalone Rust FST probe stored **178,507 unique rules with two category bits in 1,841,357 bytes**, passing stored-key and sampled suffix checks. Its warm local matcher p99 was approximately **4.8 microseconds**. This already exceeds the proposed 1 MB index allocation, before full provenance. More optimization or a different allocation is needed; no compliant full build has been demonstrated. [Probe results](benchmarks/index-probe-results.json).

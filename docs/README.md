@@ -1,5 +1,6 @@
 # Documentation
 
+- [DNS service](dns-service.md): listener setup, transport limits and counters.
 - [Implementation status](implementation-status.md): working components and remaining scope.
 - [Product roadmap](../goal.md): service, UI, parental controls, platforms and resource goals.
 - [Architecture and stack research](stack-research.md): design choices and alternatives.
