@@ -2,8 +2,9 @@
 
 Updated: 2026-11-06. Status: implementation started with tests first. The Rust
 policy library, offline compiler, atomic snapshots, CLI, bounded UDP/TCP DNS
-forwarding, bounded response caching and performance harnesses are implemented. Encrypted DNS,
-database, UI and platform packages remain planned.
+forwarding, bounded response caching, transactional startup configuration and
+performance harnesses are implemented. Encrypted DNS, analytics storage, management
+API, UI and platform packages remain planned.
 See [implementation status and measurements](docs/implementation-status.md) and the
 [application task checklist](task.md).
 

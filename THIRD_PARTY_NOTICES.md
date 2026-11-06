@@ -1,7 +1,8 @@
 # Runtime third-party notices
 
 Direct runtime dependencies are fst 0.4.7, Hickory Proto 0.26.3, Tokio 1.48.0
-and ipnet 2.11.0. Their MIT notices are reproduced below. Cargo.lock pins the
+ipnet 2.11.0 and rusqlite 0.41.1 (bundled SQLite 3.54.1 through
+libsqlite3-sys 0.39.1). Their MIT notices are reproduced below. Cargo.lock pins the
 complete dependency graph; dependency package metadata contains transitive
 license declarations and notices needed when preparing binary distributions.
 HTTP benchmark adapters and generators remain development-only dependencies.
@@ -95,3 +96,32 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## rusqlite 0.41.1 and libsqlite3-sys 0.39.1
+
+https://github.com/rusqlite/rusqlite — MIT. Both crates use the following notice.
+
+Copyright (c) 2014 The rusqlite developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+## SQLite 3.54.1
+
+SQLite is dedicated to the public domain. See https://sqlite.org/copyright.html.
+The bundled source retains its authorship and public-domain notice.

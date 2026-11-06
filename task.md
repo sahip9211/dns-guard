@@ -4,8 +4,8 @@ Status: prototype in active development. `[x]` means implemented and verified fo
 the stated scope; `[ ]` means unfinished, including partially implemented work.
 The full application is not release-ready. Update this checklist with each milestone.
 
-Latest implementation: bounded positive/negative DNS caching. Next implementation
-milestone: persistent configuration, authenticated API and the first dashboard.
+Latest implementation: bounded transactional startup configuration with no SQL on
+the DNS path. Next implementation milestone: authenticated API and the first dashboard.
 Requirements and design rationale: [goal.md](goal.md). Measurements and limitations:
 [implementation status](docs/implementation-status.md).
 
@@ -86,8 +86,8 @@ No completed component substitutes for the whole-product size/performance gates.
 
 ## Persistent configuration, database and management API
 
-- [ ] CONFIG-01 — Add versioned configuration schema, validation, migrations, defaults and recovery from corrupt configuration.
-- [ ] CONFIG-02 — Implement SQLite configuration storage with bounded page/cache/WAL budgets and durable transactional changes.
+- [x] CONFIG-01 — Add schema-v1 bootstrap migration, validation and defaults; recover interrupted transactions and preserve corrupt/unsupported files for explicit restoration.
+- [x] CONFIG-02 — Implement SQLite configuration storage with bounded database pages, a small cache target, no WAL and durable transactional changes; close it before DNS starts.
 - [ ] CONFIG-03 — Define versioned API schemas shared by desktop, web and CLI; validate all mutations before activation.
 - [ ] CONFIG-04 — Implement administrator bootstrap, strong credential storage, session/token expiry and revocation; no default password.
 - [ ] CONFIG-05 — Serve management on loopback by default; explicitly configure remote HTTPS and trust.

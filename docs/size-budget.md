@@ -16,12 +16,18 @@ RAM is a separate constrained resource, measured through process and system memo
 
 No complete application currently meets this limit. The strict cap is a feasibility objective, not an achieved property.
 
-Latest implementation checkpoint: the Linux CLI including UDP/TCP forwarding and caching is
-1,032,472 bytes. A current HaGeZi Light feed plus synthetic test rules compiles to
-1,018,122 bytes for 87,812 logical policies, giving 2,050,594 bytes for these two
-artifacts. This differs from the earlier 178,507-rule corpus and is not a compression
-comparison. UI, analytics, retained feeds, notices and other installed state are
-outside that pair. The complete-product target is still unproven.
+The latest Linux executable with transactional startup configuration is
+1,851,480 bytes. Removing unused SQLite search/spatial modules and extension
+loading, and compiling SQLite for size while retaining Rust DNS optimization,
+reduced it from 3,252,408 bytes. The previous DNS/cache-only binary was 1,032,472
+bytes. These are separate feature/build comparisons, not compression ratios.
+
+The current 87,812-policy test index is 1,018,122 bytes. The configuration database
+uses 12,288 bytes in this fixture; reserve 200 KiB for its database/journal update
+budget. Executable + index + that reservation total 3,074,402 bytes, excluding
+notices, UI, analytics, retained feeds, other state and index update overlap.
+The complete-product target is still unproven. See
+[configuration limits](configuration.md).
 
 The update publisher gates `other bytes + old index + staged index` against the
 strict ceiling using a caller-supplied inventory. See the

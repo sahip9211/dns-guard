@@ -2,7 +2,7 @@
 name = "dns-guard"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.89"
 publish = false
 description = "Compact, exact DNS policy engine and offline list compiler"
 
@@ -10,6 +10,7 @@ description = "Compact, exact DNS policy engine and offline list compiler"
 fst = "=0.4.7"
 hickory-proto = { version = "=0.26.3", default-features = false, features = ["std"] }
 ipnet = "=2.11.0"
+rusqlite = { version = "=0.41.1", default-features = false, features = ["bundled", "limits", "fallible_uint"] }
 tokio = { version = "=1.48.0", default-features = false, features = ["net", "rt", "sync", "time", "io-util", "macros", "signal"] }
 
 [dev-dependencies]
@@ -30,6 +31,11 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
+
+# SQL is startup/administration work. Preserve -O3 for DNS and size-optimize the
+# bundled SQLite C implementation independently.
+[profile.release.package.libsqlite3-sys]
+opt-level = "s"
 
 [[bin]]
 name = "dns-guard"

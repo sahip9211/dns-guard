@@ -32,7 +32,7 @@ const MAX_QUERY: usize = 4096;
 const UDP_PAYLOAD: u16 = 1232;
 const TCP_IDLE: Duration = Duration::from_secs(5);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ServerConfig {
     pub listen: SocketAddr,
     pub upstream: SocketAddr,
@@ -60,7 +60,7 @@ impl Default for ServerConfig {
     }
 }
 impl ServerConfig {
-    fn validate(&self) -> io::Result<()> {
+    pub(crate) fn validate(&self) -> io::Result<()> {
         if !(1..=4096).contains(&self.max_inflight)
             || !(1..=1024).contains(&self.max_tcp_connections)
             || (self.cache_bytes != 0 && !(4096..=MAX_CACHE_BYTES).contains(&self.cache_bytes))

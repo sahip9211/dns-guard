@@ -1,4 +1,5 @@
 #![forbid(unsafe_code)]
+mod config_cli;
 use dns_guard::{Budget, Category, FeedFormat, Index, Limits, compile, parse_feed};
 use std::{fs::File, io::Read, path::Path, sync::Arc, time::Duration};
 
@@ -9,6 +10,10 @@ const HELP: &str = "dns-guard — compact DNS filtering prototype
   dns-guard check INDEX CATEGORIES DOMAIN [DOMAIN ...]
   dns-guard inspect INDEX
   dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
+  dns-guard serve --config DATABASE
+  dns-guard config init DATABASE INDEX --upstream IP:PORT [OPTIONS]
+  dns-guard config show DATABASE
+  dns-guard config set DATABASE --revision N [--index INDEX] [OPTIONS]
 
 Serve options:
   --listen IP:PORT          UDP and TCP listener (default 127.0.0.1:5353)
@@ -20,9 +25,11 @@ Serve options:
   --cache-bytes N          Cache table/payload limit, default 262144; 0 disables
 
 The listener uses one runtime thread. No OS DNS settings are changed.
+Saved configuration changes apply after restarting the service.
+Configuration is read and closed before starting the DNS runtime.
 
 FORMAT: domains | hosts | adblock
-CATEGORIES: comma-separated ads,adult,malware,tracking,phishing,gambling,social; or all
+CATEGORIES: comma-separated ads,adult,malware,tracking,phishing,gambling,social; all; none
 
 --other-bytes must include every installed byte except the current output index:
 executables, added runtimes, assets, raw feeds, configuration, DB/WAL, logs and
@@ -49,6 +56,7 @@ fn run() -> CliResult<()> {
         "--version" => println!("dns-guard {}", env!("CARGO_PKG_VERSION")),
         "compile" => compile_command(&args[1..])?,
         "serve" => serve_command(&args[1..])?,
+        "config" => config_cli::run(&args[1..])?,
         "check" if args.len() >= 4 => {
             let enabled = categories(&args[2])?;
             let index = Index::load(Path::new(&args[1]), Limits::default().max_index_bytes)?;
@@ -87,41 +95,24 @@ fn run() -> CliResult<()> {
 
 fn serve_command(args: &[String]) -> CliResult<()> {
     use dns_guard::server::{Server, ServerConfig};
-    let input = args
-        .first()
-        .ok_or("serve requires INDEX and --upstream IP:PORT")?;
-    let mut config = ServerConfig::default();
-    let mut seen = std::collections::HashSet::new();
-    let mut clients = Vec::new();
-    let (options, remainder) = args[1..].as_chunks::<2>();
-    for option in options {
-        let key = option[0].as_str();
-        let value = &option[1];
-        if key != "--allow-client" && !seen.insert(key) {
-            return Err(format!("duplicate serve option: {key}").into());
+    let (input, config) = if args.first().is_some_and(|arg| arg == "--config") {
+        if args.len() != 2 {
+            return Err(
+                "serve --config requires exactly one database path and no overrides".into(),
+            );
         }
-        match key {
-            "--listen" => config.listen = value.parse()?,
-            "--upstream" => config.upstream = value.parse()?,
-            "--allow-client" => clients.push(value.parse()?),
-            "--categories" => config.categories = categories(value)?,
-            "--max-inflight" => config.max_inflight = value.parse()?,
-            "--max-tcp-connections" => config.max_tcp_connections = value.parse()?,
-            "--timeout-ms" => config.timeout = Duration::from_millis(value.parse()?),
-            "--cache-bytes" => config.cache_bytes = value.parse()?,
-            _ => return Err(format!("unknown serve option: {key}").into()),
-        }
-    }
-    if !remainder.is_empty() || !seen.contains("--upstream") {
-        return Err("serve requires complete options and an explicit --upstream IP:PORT".into());
-    }
-    if !clients.is_empty() {
-        config.allowed_clients = clients;
-    }
-    let index = Arc::new(Index::load(
-        Path::new(input),
-        Limits::default().max_index_bytes,
-    )?);
+        let saved = dns_guard::config::ConfigStore::open(Path::new(&args[1]))?.load()?;
+        eprintln!("Using configuration revision {}", saved.revision);
+        (saved.settings.index_path, saved.settings.dns)
+    } else {
+        let input = args
+            .first()
+            .ok_or("serve requires INDEX and --upstream IP:PORT")?;
+        let mut config = ServerConfig::default();
+        parse_serve_options(&args[1..], &mut config, true)?;
+        (Path::new(input).to_path_buf(), config)
+    };
+    let index = Arc::new(Index::load(&input, Limits::default().max_index_bytes)?);
     tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()?
@@ -146,6 +137,41 @@ fn serve_command(args: &[String]) -> CliResult<()> {
             eprintln!("DNS stopped: {:?}", stats.snapshot());
             Ok::<(), Box<dyn std::error::Error>>(())
         })
+}
+
+fn parse_serve_options(
+    args: &[String],
+    config: &mut dns_guard::server::ServerConfig,
+    require_upstream: bool,
+) -> CliResult<()> {
+    let mut seen = std::collections::HashSet::new();
+    let mut clients = Vec::new();
+    let (options, remainder) = args.as_chunks::<2>();
+    for option in options {
+        let key = option[0].as_str();
+        let value = &option[1];
+        if key != "--allow-client" && !seen.insert(key) {
+            return Err(format!("duplicate serve option: {key}").into());
+        }
+        match key {
+            "--listen" => config.listen = value.parse()?,
+            "--upstream" => config.upstream = value.parse()?,
+            "--allow-client" => clients.push(value.parse()?),
+            "--categories" => config.categories = categories(value)?,
+            "--max-inflight" => config.max_inflight = value.parse()?,
+            "--max-tcp-connections" => config.max_tcp_connections = value.parse()?,
+            "--timeout-ms" => config.timeout = Duration::from_millis(value.parse()?),
+            "--cache-bytes" => config.cache_bytes = value.parse()?,
+            _ => return Err(format!("unknown serve option: {key}").into()),
+        }
+    }
+    if !remainder.is_empty() || (require_upstream && !seen.contains("--upstream")) {
+        return Err("serve requires complete options and an explicit --upstream IP:PORT".into());
+    }
+    if !clients.is_empty() {
+        config.allowed_clients = clients;
+    }
+    Ok(())
 }
 
 fn compile_command(args: &[String]) -> CliResult<()> {
@@ -224,6 +250,9 @@ fn compile_command(args: &[String]) -> CliResult<()> {
 }
 
 fn categories(value: &str) -> CliResult<u32> {
+    if value == "none" {
+        return Ok(0);
+    }
     if value == "all" {
         return Ok(Category::ALL);
     }

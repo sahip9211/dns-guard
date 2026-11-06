@@ -1,0 +1,4 @@
+[env]
+# Configuration uses ordinary tables. Keep thread safety, constraints, integrity
+# checks and recovery; omit search/spatial modules and runtime extension loading.
+LIBSQLITE3_FLAGS = "-USQLITE_ENABLE_FTS3 -USQLITE_ENABLE_FTS3_PARENTHESIS -USQLITE_ENABLE_FTS5 -USQLITE_ENABLE_RTREE -DSQLITE_OMIT_LOAD_EXTENSION"

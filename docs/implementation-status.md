@@ -6,6 +6,11 @@ updater.
 
 ## Implemented
 
+- Transactional SQLite startup configuration with revision conflict checks, a
+  64 KiB database ceiling, interrupted-write recovery and CLI initialization/edits.
+  The connection closes before DNS starts; changes require restart. See
+  [configuration](configuration.md) for budgets, recovery and remaining management work.
+
 - Four-way bounded DNS response cache with exact request keys, positive/SOA-bounded
   negative responses, TTL aging, dual-clock expiry and cache counters. See
   [cache scope](dns-cache.md) for bypassed protocol variants and resource accounting.

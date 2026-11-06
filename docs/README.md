@@ -14,3 +14,5 @@
 - [Hashing and sharding](hash-and-sharding.md): measured speed/memory tradeoffs.
 - [Earlier dataflow experiments](dataflow-optimization.md): prefix tables and runtime comparisons.
 - [Measurement archive](benchmarks/README.md): raw results and provenance.
+
+- [Persistent configuration](configuration.md): transactional settings, CLI workflow, resource limits and recovery.

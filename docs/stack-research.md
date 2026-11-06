@@ -6,7 +6,7 @@ Research date: 2026-11-06. Product requirements: [goal.md](../goal.md).
 
 Use a Rust service with Tokio, Hickory DNS, Axum, and SQLite through rusqlite. Match block rules against a compiled in-memory FST index, not SQL. Store history asynchronously through bounded queues. Under the all-in **under 10 MB** constraint, the first UI feasibility candidate is **egui/eframe compiled natively and to WebAssembly**, avoiding an additional desktop WebView framework. Tauri/Svelte remains a researched alternative, not a size-qualified selection.
 
-The service stack is selected for a feasibility prototype. Resource numbers below are targets and sizing calculations; the policy engine and development benchmarks are implemented, while the DNS service, database and UI remain planned. The [all-in size budget](size-budget.md) takes precedence over larger storage examples below. Millions of exact rules and rich durable history may not fit alongside a desktop application in 10 MB. Primary documentation and challenge code were reviewed; no challenge benchmark was reproduced on the target hardware.
+The service stack is selected for a feasibility prototype. Resource numbers below are targets and sizing calculations; the policy engine, UDP/TCP forwarder, bounded cache, transactional startup configuration and development benchmarks are implemented. The management API, analytics storage and UI remain planned. The [all-in size budget](size-budget.md) takes precedence over larger storage examples below. Millions of exact rules and rich durable history may not fit alongside a desktop application in 10 MB. Primary documentation and challenge code were reviewed; no challenge benchmark was reproduced on the target hardware.
 
 ## 2. What the Twelve Dollar Server Challenge actually shows
 
@@ -45,7 +45,7 @@ One Axum-labelled submission uses patched Hyper/Tokio and explicitly distinguish
 | Rule index | `fst` maps plus compact metadata arrays | Immutable exact/suffix-rule index, shared by profiles; compare against radix trie and hash-set baselines. |
 | Small mutable policy overrides | Rust maps with randomized hashing | Fast edits without rebuilding every feed; bounded size and periodic merge into a snapshot. |
 | Snapshot activation | `arc-swap` | Publish one consistent policy/index revision without a global read lock on every query. |
-| DNS cache | Byte-budgeted sharded LRU/TTL layer using the `lru` crate and short locks | Entry and byte caps, policy/upstream isolation, explicit expiry and admission. Avoid a second hidden unbounded resolver cache. |
+| DNS cache | Byte-budgeted four-way set-associative TTL cache with exact keys and short locks | Entry and byte caps, policy/upstream isolation, explicit expiry and admission. Avoid a second hidden unbounded resolver cache. |
 | Feed fetching | reqwest using rustls, streaming to staging files | Conditional HTTPS requests, deadlines, bounded downloads, limited parallelism, digest/provenance recording. |
 | Feed compression | Zstandard for published downloads; FST for searchable domain keys | Transfer compression is decoded once into the staged index. Compact keys/metadata remain directly searchable; no archive decompression per query. |
 | Authentication | Argon2id password hashes, random opaque sessions, hashed scoped API tokens | Bound concurrent password checks; session validation must not run a memory-hard password hash on every API call. |
@@ -108,6 +108,12 @@ List compilation must account for the old index, staged input, new index, sortin
 
 ### SQLite is the primary store
 
+The implemented [configuration store](configuration.md) uses DELETE rollback
+journaling for infrequent, bounded settings changes and closes before DNS starts.
+Its bundled SQLite build omits unused search/spatial modules and extension loading.
+The WAL discussion below concerns future concurrent analytics storage, not a WAL
+already running in the current service.
+
 SQLite matches an appliance's local, low-administration storage needs. WAL permits concurrent readers with a writer, but there is still one writer at a time per database file. Increasing the connection pool does not create parallel writers. Keep databases on local storage, with bounded read duration so readers do not hold checkpoints back indefinitely. [SQLite use cases](https://www.sqlite.org/whentouse.html), [WAL concurrency](https://www.sqlite.org/wal.html).
 
 Choose **rusqlite with explicit workers and prepared SQL**. Its synchronous API makes ownership, batching, cancellation boundaries, and memory budgets visible. SQLx is a valid alternative, but its SQLite async interface also uses background threads; it does not turn SQLite into a nonblocking database engine or remove the single-writer constraint. This is an architecture preference, not a measured claim that SQLx is slow. [rusqlite](https://docs.rs/rusqlite/latest/rusqlite/), [SQLx SQLite implementation](https://docs.rs/sqlx/latest/sqlx/sqlite/struct.SqliteConnection.html).
@@ -125,7 +131,7 @@ Choose **rusqlite with explicit workers and prepared SQL**. Its synchronous API 
 
 | Store | Data | Write policy |
 | --- | --- | --- |
-| `config.sqlite` | Profiles, rules, devices, schedules, source registry, administrators, schema versions, configuration audit | Low-volume dedicated writer, WAL + `synchronous=FULL`; save success only after commit and snapshot activation status is known. |
+| `config.sqlite` | Profiles, rules, devices, schedules, source registry, administrators, schema versions, configuration audit | Current startup settings: bounded DELETE journal + `synchronous=EXTRA`; future live writes need a separate worker and explicit activation status. |
 | `queries/<segment>.sqlite` | Time-ordered DNS event metadata | One active ingestion writer; WAL + `synchronous=NORMAL`; rotate by time or size. |
 | `summary.sqlite` | Explicit rollup dimensions, ingestion watermarks, retention metadata | Batched updates by the analytics worker; rebuildable where retained raw data exists. |
 | Versioned compiled index files | Domain keys, compact category/rule metadata, source digests | Build in staging, validate, then atomically activate an immutable revision. |

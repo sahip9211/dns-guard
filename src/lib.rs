@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 
 mod cache;
+pub mod config;
 mod domain;
 mod feeds;
 mod index;
