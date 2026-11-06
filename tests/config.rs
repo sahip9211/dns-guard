@@ -240,3 +240,23 @@ fn creation_is_private_and_symlinks_are_rejected() {
     symlink(dir.db(), &link).unwrap();
     assert!(ConfigStore::open(&link).is_err());
 }
+
+#[cfg(unix)]
+#[test]
+fn system_directory_aliases_work_without_following_a_database_symlink() {
+    use std::os::unix::fs::symlink;
+    let dir = Temp::new();
+    let actual = dir.0.join("actual");
+    fs::create_dir(&actual).unwrap();
+    let alias = dir.0.join("alias");
+    symlink(&actual, &alias).unwrap();
+    let path = alias.join("settings.sqlite");
+    drop(ConfigStore::create(&path, &dir.settings()).unwrap());
+    assert_eq!(
+        ConfigStore::open(&path).unwrap().load().unwrap().revision,
+        1
+    );
+    let link = alias.join("redirect.sqlite");
+    symlink(actual.join("settings.sqlite"), &link).unwrap();
+    assert!(ConfigStore::open(&link).is_err());
+}

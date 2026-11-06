@@ -96,7 +96,9 @@ restore commands remain unfinished; never delete a hot journal to force startup.
 
 Keep the database in an administrator-owned directory on local storage. New
 files use mode 0600 on Unix; existing permissions are not silently changed.
-Windows access follows the parent directory ACL. Database symlinks are rejected.
+Windows access follows the parent directory ACL. Database symlinks are rejected;
+the parent directory is canonicalized so system aliases such as macOS `/var`
+remain usable without following a symlink at the database filename.
 These checks do not defend a directory another user can rewrite concurrently.
 No SQL extension loading API is enabled, and trusted-schema execution, triggers,
 views and double-quoted SQL string literals are disabled on application connections.

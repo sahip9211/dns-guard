@@ -166,8 +166,18 @@ impl ConfigStore {
 }
 
 fn connect(path: &Path) -> Result<Connection> {
+    // SQLite's NOFOLLOW rejects symlinks in every path component. Canonicalize
+    // the directory (e.g. macOS /var -> /private/var), never the database itself.
+    let name = path
+        .file_name()
+        .ok_or_else(|| Error::new("configuration path must name a file"))?;
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let path = fs::canonicalize(parent)?.join(name);
     let connection = Connection::open_with_flags(
-        path,
+        &path,
         OpenFlags::SQLITE_OPEN_READ_WRITE
             | OpenFlags::SQLITE_OPEN_NO_MUTEX
             | OpenFlags::SQLITE_OPEN_NOFOLLOW,

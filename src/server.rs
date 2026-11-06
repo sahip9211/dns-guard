@@ -201,11 +201,12 @@ impl Server {
     pub async fn bind(config: ServerConfig, index: Arc<Index>) -> io::Result<Self> {
         config.validate()?;
         let tcp = TcpListener::bind(config.listen).await?;
+        let (tcp, udp) = bind_udp_pair(tcp, config.listen).await?;
         let address = tcp.local_addr()?;
         if address == config.upstream {
             return Err(invalid("upstream points to this listener"));
         }
-        let udp = Arc::new(UdpSocket::bind(address).await?);
+        let udp = Arc::new(udp);
         let queries = Arc::new(Semaphore::new(config.max_inflight));
         let cache = Cache::new(config.cache_bytes);
         let stats = Arc::new(Stats::default());
@@ -268,6 +269,29 @@ impl Server {
         tasks.abort_all();
         while tasks.join_next().await.is_some() {}
         Ok(())
+    }
+}
+
+async fn bind_udp_pair(
+    mut tcp: TcpListener,
+    requested: SocketAddr,
+) -> io::Result<(TcpListener, UdpSocket)> {
+    let mut retries = 0;
+    loop {
+        match UdpSocket::bind(tcp.local_addr()?).await {
+            Ok(udp) => return Ok((tcp, udp)),
+            Err(error)
+                if requested.port() == 0
+                    && retries < 7
+                    && error.kind() == io::ErrorKind::AddrInUse =>
+            {
+                // TCP and UDP use independent port spaces. A TCP-selected port
+                // may already be occupied for UDP. Fixed ports must fail as-is.
+                retries += 1;
+                tcp = TcpListener::bind(requested).await?;
+            }
+            Err(error) => return Err(error),
+        }
     }
 }
 
@@ -515,6 +539,41 @@ async fn forward(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ephemeral_ports_retry_udp_conflicts_but_explicit_ports_fail() {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap()
+            .block_on(async {
+                // Reserve a matching TCP/UDP pair so the initial UDP collision is
+                // deterministic, independent of the OS ephemeral-port allocator.
+                async fn reserved_pair() -> (TcpListener, UdpSocket) {
+                    for _ in 0..16 {
+                        let tcp = TcpListener::bind("127.0.0.1:0").await.unwrap();
+                        match UdpSocket::bind(tcp.local_addr().unwrap()).await {
+                            Ok(udp) => return (tcp, udp),
+                            Err(e) if e.kind() == io::ErrorKind::AddrInUse => continue,
+                            Err(e) => panic!("reserve pair: {e}"),
+                        }
+                    }
+                    panic!("could not reserve a local port pair");
+                }
+                let (tcp, occupied) = reserved_pair().await;
+                let occupied_address = occupied.local_addr().unwrap();
+                let (new_tcp, new_udp) = bind_udp_pair(tcp, "127.0.0.1:0".parse().unwrap())
+                    .await
+                    .unwrap();
+                assert_ne!(new_tcp.local_addr().unwrap(), occupied_address);
+                assert_eq!(new_tcp.local_addr().unwrap(), new_udp.local_addr().unwrap());
+                let (tcp, occupied) = reserved_pair().await;
+                let error = bind_udp_pair(tcp, occupied.local_addr().unwrap())
+                    .await
+                    .unwrap_err();
+                assert_eq!(error.kind(), io::ErrorKind::AddrInUse);
+            });
+    }
+
     #[test]
     fn wildcard_listener_can_use_a_remote_upstream_on_the_same_port() {
         let mut config = ServerConfig {
