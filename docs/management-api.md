@@ -18,7 +18,8 @@ dns-guard serve INDEX --upstream 127.0.0.1:53 \
 ```
 
 Visit exactly the numeric URL printed at startup. `localhost` and alternate
-Host headers are deliberately rejected. IPv6 `[::1]:8788` is also supported.
+Host headers are deliberately rejected. For port 80, the browser-normalized Host
+without `:80` is also accepted and Origin uses the normalized URL. IPv6 `[::1]:8788` is also supported.
 Nothing opens a browser automatically or changes the machine's DNS settings.
 Management options also work with `serve --config DATABASE --keyring DATA_KEY_ID`.
 The active database key cannot be reused as the management token.

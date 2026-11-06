@@ -66,7 +66,7 @@ impl Management {
         };
         let state = Arc::new(State {
             authority: address.to_string(),
-            origin: format!("http://{address}"),
+            origin: http_origin(address),
             bearer: token.expose_bearer(),
             stats,
             started: Instant::now(),
@@ -180,20 +180,37 @@ struct Policy {
     bytes: usize,
 }
 
+// Browsers omit the default HTTP port in Host and Origin. Keep the numeric
+// address restriction while accepting both explicit and canonical port-80 Host.
+fn http_origin(address: SocketAddr) -> String {
+    if address.port() == 80 {
+        match address.ip() {
+            std::net::IpAddr::V4(ip) => format!("http://{ip}"),
+            std::net::IpAddr::V6(ip) => format!("http://[{ip}]"),
+        }
+    } else {
+        format!("http://{address}")
+    }
+}
+
 impl State {
+    fn accepts_origin(&self, headers: &header::HeaderMap) -> bool {
+        let host = single(headers, "host");
+        (host == Some(self.authority.as_bytes()) || host == Some(&self.origin.as_bytes()[7..]))
+            && (!headers.contains_key("origin")
+                || single(headers, "origin") == Some(self.origin.as_bytes()))
+            && (!headers.contains_key("sec-fetch-site")
+                || matches!(
+                    single(headers, "sec-fetch-site"),
+                    Some(b"same-origin" | b"none")
+                ))
+    }
+
     fn respond(&self, req: Request<Incoming>) -> Response<Body> {
         let headers = req.headers();
         // Require the exact numeric origin advertised at startup. No forwarded
         // host trust or CORS exceptions, including for the public login shell.
-        if single(headers, "host") != Some(self.authority.as_bytes())
-            || (headers.contains_key("origin")
-                && single(headers, "origin") != Some(self.origin.as_bytes()))
-            || (headers.contains_key("sec-fetch-site")
-                && !matches!(
-                    single(headers, "sec-fetch-site"),
-                    Some(b"same-origin" | b"none")
-                ))
-        {
+        if !self.accepts_origin(headers) {
             return error(StatusCode::FORBIDDEN, "origin rejected");
         }
         if req.method() != hyper::Method::GET {
@@ -287,4 +304,31 @@ fn response(code: StatusCode, mime: &'static str, body: Bytes) -> Response<Body>
         .header("referrer-policy", "no-referrer")
         .header(header::CONNECTION, "close")
         .body(Full::new(body)).expect("static response headers are valid")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn default_http_port_matches_browser_origin_normalization() {
+        for (address, host) in [("127.0.0.1:80", "127.0.0.1"), ("[::1]:80", "[::1]")] {
+            let state = State {
+                authority: address.into(),
+                origin: http_origin(address.parse().unwrap()),
+                bearer: Zeroizing::new(String::new()),
+                stats: Arc::new(Stats::default()),
+                started: Instant::now(),
+                rules: 0,
+                index_bytes: 0,
+            };
+            for allowed_host in [address, host] {
+                let mut headers = header::HeaderMap::new();
+                headers.insert("host", allowed_host.parse().unwrap());
+                headers.insert("origin", format!("http://{host}").parse().unwrap());
+                assert!(state.accepts_origin(&headers));
+                headers.insert("host", "evil.example".parse().unwrap());
+                assert!(!state.accepts_origin(&headers));
+            }
+        }
+    }
 }
