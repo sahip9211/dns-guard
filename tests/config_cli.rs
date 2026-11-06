@@ -180,6 +180,7 @@ fn service_uses_saved_configuration_from_another_directory_and_releases_database
     let stderr = child.0.stderr.take().unwrap();
     let (tx, rx) = mpsc::channel();
     let reader = std::thread::spawn(move || {
+        let mut startup_log = String::new();
         for line in BufReader::new(stderr).lines() {
             let Ok(line) = line else {
                 break;
@@ -188,14 +189,20 @@ fn service_uses_saved_configuration_from_another_directory_and_releases_database
                 .strip_prefix("DNS listening on ")
                 .and_then(|s| s.split_whitespace().next())
             {
-                let _ = tx.send(address.to_owned());
-                break;
+                let _ = tx.send(Ok(address.to_owned()));
+                return;
+            }
+            if startup_log.len() < 4096 {
+                startup_log.push_str(&line);
+                startup_log.push('\n');
             }
         }
+        let _ = tx.send(Err(startup_log));
     });
     let address = rx
         .recv_timeout(Duration::from_secs(10))
-        .expect("service did not become ready");
+        .expect("service did not become ready")
+        .unwrap_or_else(|log| panic!("service exited before readiness:\n{log}"));
     reader.join().unwrap();
     // Exclusive access remains possible while DNS is running; no hidden DB reader.
     let connection = rusqlite::Connection::open(f.root.join("settings.sqlite")).unwrap();
