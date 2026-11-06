@@ -2,9 +2,10 @@
 
 Updated: 2026-11-06. Status: implementation started with tests first. The Rust
 policy library, offline compiler, atomic snapshots, CLI, bounded UDP/TCP DNS
-forwarding and performance harnesses are implemented. Encrypted DNS, caching,
+forwarding, bounded response caching and performance harnesses are implemented. Encrypted DNS,
 database, UI and platform packages remain planned.
-See [implementation status and measurements](docs/implementation-status.md).
+See [implementation status and measurements](docs/implementation-status.md) and the
+[application task checklist](task.md).
 
 Build a self-hosted DNS filtering application for homes, offices, and companies, with a native desktop application and the same administration interface available in a browser. Prioritize low memory use, low tail latency, small installation size, and reliable operation on modest hardware. Support thousands of devices through a shared network service.
 

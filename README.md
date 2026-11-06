@@ -3,8 +3,8 @@
 A compact, exact DNS policy engine in Rust, designed as the foundation for a
 self-hosted filtering service with desktop and browser administration.
 
-**Early development:** the policy engine, compiler and bounded UDP/TCP DNS
-forwarder and bounded response cache work. The administration UI, scheduled feed refresh and
+**Early development:** the policy engine, compiler, UDP/TCP forwarder and bounded
+DNS response cache work. The administration UI, scheduled feed refresh and
 production packages are not implemented. The complete application has not yet met its size
 or throughput goals.
 

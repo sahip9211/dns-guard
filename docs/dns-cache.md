@@ -87,3 +87,44 @@ limit, invalid/truncated packets, EDNS regeneration, negative answers and key
 isolation. Socket tests close the mock upstream after the first reply and verify
 subsequent UDP/TCP cache hits, correct IDs, negative caching, CNAME exclusions and
 UDP truncation with a full cached TCP answer.
+
+## Controlled cache comparison
+
+The final build at commit `dda2e62` was measured on 2026-11-06 with fresh
+processes, caching disabled and then enabled. Each run lasted 60 seconds with one
+closed-loop client querying `cache.example`. A loopback synthetic upstream returned
+`192.0.2.7` with TTL 300 and deliberately waited 5 ms per query. The service used
+an 87,812-rule index. Verified limits were 8 MiB cgroup memory, no swap and 50% of
+one logical CPU with a 10 ms quota period. The generator and mock upstream ran
+outside that cgroup on the same machine.
+
+| Measurement | Cache disabled | Cache enabled |
+| --- | ---: | ---: |
+| Correct replies | 9,705 | 331,069 |
+| Correct replies/second | 161.74 | 5,517.77 |
+| p50 latency | 6.104 ms | 0.161 ms |
+| p95 latency | 6.311 ms | 0.215 ms |
+| p99 latency | 6.486 ms | 0.272 ms |
+| Errors / timeouts | 0 / 0 | 0 / 0 |
+| Upstream requests | 9,705 | 1 |
+| Mean server CPU, one core | 5.00% | 23.15% |
+| Peak sampled server RSS | 4,030,464 bytes | 4,001,792 bytes |
+| Peak cgroup charged memory | 3,248,128 bytes | 2,359,296 bytes |
+| Mean generator CPU, one core | 10.38% | 91.62% |
+
+The cache recorded 331,068 hits, one miss, one resident entry and 24,728 accounted
+bytes. Neither run reported overloads, send errors or OOM events. Latency includes
+reply validation; percentiles are histogram upper bounds. RSS and cgroup charged
+memory use different accounting and should not be treated as interchangeable.
+
+This demonstrates the benefit of repeated queries with a delayed upstream, not
+general server capacity or a universal speedup. The cached generator was nearly
+CPU-saturated. This is a Python DNS diagnostic, not k6; the existing HTTP/k6
+acceptance gates remain unmet. Mixed names, expiry churn, more clients and an
+independent arrival-rate generator still need measurement.
+
+The [measurement report](benchmarks/dns-cache-comparison.json) includes verified
+limits, before/after cgroup counters, resource samples and source/binary hashes.
+The binary is 1,032,472 bytes; the test index is 1,018,122 bytes. Their combined
+2,050,594 bytes do not include the unfinished UI, updater, database or packages
+and therefore do not establish the complete application's size budget.
