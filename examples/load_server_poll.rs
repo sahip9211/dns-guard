@@ -63,6 +63,15 @@ mod tests {
         let (socket, _) = listener.accept().unwrap();
         socket.set_nonblocking(true).unwrap();
         let mut connection = Connection::new(TcpStream::from_std(socket));
+        let mut poll = Poll::new().unwrap();
+        poll.registry()
+            .register(
+                &mut connection.socket,
+                Token(0),
+                Interest::READABLE.add(Interest::WRITABLE),
+            )
+            .unwrap();
+        let mut events = Events::with_capacity(8);
         let index = compile(
             &[Rule::new("ads.test", Scope::Domain, Action::Block, Category::ADS).unwrap()],
             Limits::default(),
@@ -71,7 +80,16 @@ mod tests {
         client.write_all(b"GET /check/1/").unwrap();
         assert!(matches!(connection.drive(&index).unwrap(), State::Read));
         client.write_all(b"ads.test HTTP/1.1\r\nHost: local\r\n\r\nGET /health HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n").unwrap();
-        assert!(matches!(connection.drive(&index).unwrap(), State::Close));
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            if matches!(connection.drive(&index).unwrap(), State::Close) {
+                break;
+            }
+            let remaining = deadline
+                .checked_duration_since(Instant::now())
+                .expect("socket did not finish before the test deadline");
+            poll.poll(&mut events, Some(remaining)).unwrap();
+        }
         drop(connection);
         let mut text = String::new();
         client.read_to_string(&mut text).unwrap();
