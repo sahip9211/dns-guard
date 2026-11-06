@@ -51,6 +51,9 @@ to avoid ambiguity. The direct `serve INDEX --upstream ...` mode remains usable.
 No network management endpoint or live configuration activation is introduced
 by this milestone. The data key is not an API credential or a code-signing key.
 
+Linux services can use [native systemd credential delivery](service-credentials.md)
+through the existing `--key-file` interface, without another runtime library.
+
 ## DNS path and resource budgets
 
 Configuration is loaded and validated synchronously before the Tokio runtime is

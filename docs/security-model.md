@@ -61,6 +61,9 @@ counter outside the database.
   [Apple code signing and keychain requirements](https://developer.apple.com/library/archive/documentation/Security/Conceptual/CodeSigningGuide/AboutCS/AboutCS.html).
 
 These integrations are requirements, not currently installed protections.
+Linux native encrypted-credential delivery has an opt-in integration test and a
+[system service template](service-credentials.md); privileged cross-account
+installation tests and the desktop credential backends remain pending.
 
 ## Database encryption and performance
 

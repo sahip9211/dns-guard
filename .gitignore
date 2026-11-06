@@ -19,6 +19,7 @@
 *.db-shm
 *.db-wal
 *.key
+*.cred
 __pycache__/
 /k6-summary.json
 .env

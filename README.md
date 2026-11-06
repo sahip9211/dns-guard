@@ -25,6 +25,7 @@ bundled SQLCipher/OpenSSL. HTTP benchmark
 adapters and load generators are development tools, excluded from the runtime.
 
 Persistent setup: see [configuration commands and recovery](docs/configuration.md).
+Linux service setup: see [systemd credentials and isolation requirements](docs/service-credentials.md).
 
 ## Build and test
 

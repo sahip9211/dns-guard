@@ -108,6 +108,7 @@ No completed component substitutes for the whole-product size/performance gates.
 - [ ] SEC-06 — Add safe key rotation, recovery/export, intentional migration and reinstallation/restore workflows; never reset an unreadable instance automatically.
 - [ ] SEC-07 — Keep data-encryption, API-authentication and release-signing keys separate; retain release private keys outside shipped binaries and repositories.
 - [ ] SEC-08 — Test cross-instance access under actual OS identities, malicious replacement, replay/rollback limits, memory/crash dump exposure and encrypted-size/resource budgets.
+- [x] SEC-09 — Verify native systemd encrypted-credential delivery, wrong-key rejection, credential cleanup and DNS startup without adding runtime dependencies; provide a system unit template pending privileged isolation qualification.
 
 ## Clients, profiles and parental controls
 
