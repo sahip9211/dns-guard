@@ -88,7 +88,8 @@
       "Closed-loop Python generator on the same busy host; not a k6 or offered-arrival capacity result.",
       "The observed 51.903 ms p99 does not meet the 20 ms latency target.",
       "Binary and index bytes omit unimplemented UI, analytics, updater, packaging and retained raw feeds."
-    ]
+    ],
+    "feature_commit": "b67837ce0bb45b0098f2b2e365783266315f0f5b"
   },
   "report": {
     "kind": "closed-loop-blocked-udp-diagnostic-not-k6",

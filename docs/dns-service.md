@@ -121,3 +121,12 @@ cgroup charges have different shared-page accounting and must not be interchange
 The same-host Python generator averaged 87.11% of one core, so its scheduling and
 measurement overhead limit interpretation. No claim of 25,000 DNS queries/sec is
 made. [Raw measurement and artifact hashes](benchmarks/dns-service-udp.json).
+
+The separate 60-second k6 HTTP regression screen targeted 2,500 requests/sec with
+200 VUs, one server worker and the same 8 MiB / half-core caps. It handled 147,947
+requests with zero HTTP/policy errors, but **failed** its gates: HTTP p99 was
+78.34 ms and 2,054 arrivals were dropped. Matcher p99 was 0.00843 ms. Server mean
+CPU was 17.52% of one core and peak sampled RSS was 6,148,096 bytes; generator CPU
+averaged 215.01%. This is an HTTP adapter measurement, not DNS throughput, and it
+is not directly comparable with older runs using a larger corpus.
+[Full k6 result, configuration and samples](benchmarks/dns-service-k6-regression.json).
