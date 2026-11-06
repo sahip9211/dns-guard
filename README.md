@@ -4,7 +4,7 @@ A compact, exact DNS policy engine in Rust, designed as the foundation for a
 self-hosted filtering service with desktop and browser administration.
 
 **Early development:** the policy engine, compiler, UDP/TCP forwarder and bounded
-DNS response cache and persistent startup configuration work. The administration UI, scheduled feed refresh and
+DNS response cache and encrypted startup configuration work. The administration UI, scheduled feed refresh and
 production packages are not implemented. The complete application has not yet met its size
 or throughput goals.
 
@@ -12,7 +12,7 @@ or throughput goals.
 
 - UDP/TCP DNS filtering, upstream TCP fallback, client network allowlists and bounded concurrency.
 - Bounded positive/negative response caching with TTL aging, eviction and counters.
-- Transactional SQLite settings with revision checks, bounded storage and interrupted-write recovery; no SQL on the DNS path.
+- Encrypted SQLCipher settings with explicit per-instance keys, revision checks and interrupted-write recovery; no SQL on the DNS path.
 - Exact hostname and subdomain matching with compressed immutable FST indexes.
 - Category-scoped block, allow and enforced-block policies.
 - Selected-source compilation that preserves overlapping contributions.
@@ -21,14 +21,14 @@ or throughput goals.
 - Tests for policy semantics, independent oracles, corruption, limits and concurrency.
 
 The runtime uses `fst`, Hickory protocol parsing, Tokio, `ipnet` and rusqlite with
-bundled SQLite. HTTP benchmark
+bundled SQLCipher/OpenSSL. HTTP benchmark
 adapters and load generators are development tools, excluded from the runtime.
 
 Persistent setup: see [configuration commands and recovery](docs/configuration.md).
 
 ## Build and test
 
-Use stable Rust (1.89 or newer), Cargo and a C compiler for bundled SQLite. Build
+Use stable Rust (1.89 or newer), Cargo and a C compiler for bundled SQLCipher/OpenSSL. Build
 from the repository root to apply its SQLite feature configuration. Python 3.10+ is needed for the optional feed and
 benchmark tools. Go 1.22+ is needed only for the native diagnostic client.
 

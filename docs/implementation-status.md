@@ -6,8 +6,12 @@ updater.
 
 ## Implemented
 
-- Transactional SQLite startup configuration with revision conflict checks, a
-  64 KiB database ceiling, interrupted-write recovery and CLI initialization/edits.
+Private policy indexes, OS credential custody and installed per-instance service
+identities are still unfinished. Encryption currently covers configuration and
+its rollback journal; see [security scope](security-model.md).
+
+- Encrypted SQLCipher startup configuration with revision conflict checks, a
+  64 KiB database ceiling, explicit key files, wrong-key/tamper rejection and interrupted-write recovery and CLI initialization/edits.
   The connection closes before DNS starts; changes require restart. See
   [configuration](configuration.md) for budgets, recovery and remaining management work.
 

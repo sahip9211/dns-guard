@@ -2,12 +2,26 @@ use super::{CliResult, parse_serve_options};
 use dns_guard::{
     Index, Limits,
     config::{ConfigStore, Settings},
+    keys::DataKey,
     server::ServerConfig,
 };
 use std::path::Path;
 
 pub fn run(args: &[String]) -> CliResult<()> {
+    if args.first().is_some_and(|arg| arg == "keygen") {
+        if args.len() != 2 {
+            return Err("use config keygen KEY_FILE".into());
+        }
+        DataKey::create_file(Path::new(&args[1]))?;
+        println!("created private instance key; keep it separate from database backups");
+        return Ok(());
+    }
+    let (args, key) = with_key(args)?;
     match args.first().map(String::as_str) {
+        Some("encrypt") if args.len()==3 => {
+            ConfigStore::import_plaintext(Path::new(&args[1]),Path::new(&args[2]),&key)?;
+            println!("created encrypted configuration revision=1; source remains plaintext and was not removed");
+        }
         Some("init") if args.len() >= 3 => {
             let mut settings = Settings {
                 index_path: std::fs::canonicalize(&args[2])?,
@@ -15,17 +29,17 @@ pub fn run(args: &[String]) -> CliResult<()> {
             };
             parse_serve_options(&args[3..], &mut settings.dns, true)?;
             validate_index(&settings)?;
-            ConfigStore::create(Path::new(&args[1]), &settings)?;
+            ConfigStore::create(Path::new(&args[1]), &settings, &key)?;
             println!("created configuration revision=1; restart service to apply");
         }
         Some("show") if args.len() == 2 => {
-            let saved = ConfigStore::open(Path::new(&args[1]))?.load()?;
+            let saved = ConfigStore::open(Path::new(&args[1]), &key)?.load()?;
             let s = &saved.settings;
             println!("schema=1 revision={}\nindex={}\nlisten={}\nupstream={}\ncategories={}\nmax_inflight={}\nmax_tcp_connections={}\ncache_bytes={}\ntimeout_ms={}", saved.revision, s.index_path.display(), s.dns.listen, s.dns.upstream, s.dns.categories, s.dns.max_inflight, s.dns.max_tcp_connections, s.dns.cache_bytes, s.dns.timeout.as_millis());
             for client in &s.dns.allowed_clients { println!("allow_client={client}"); }
         }
         Some("set") if args.len() >= 4 => {
-            let mut store = ConfigStore::open(Path::new(&args[1]))?;
+            let mut store = ConfigStore::open(Path::new(&args[1]), &key)?;
             let mut settings = store.load()?.settings;
             let mut revision = None;
             let mut index = None;
@@ -51,6 +65,26 @@ pub fn run(args: &[String]) -> CliResult<()> {
         _ => return Err("use config init DATABASE INDEX --upstream IP:PORT, config show DATABASE, or config set DATABASE --revision N [OPTIONS]".into()),
     }
     Ok(())
+}
+
+pub fn with_key(args: &[String]) -> CliResult<(Vec<String>, DataKey)> {
+    let mut rest = Vec::new();
+    let mut path = None;
+    let mut i = 0;
+    while i < args.len() {
+        if args[i] == "--key-file" {
+            if path.is_some() || i + 1 == args.len() {
+                return Err("supply exactly one --key-file PATH".into());
+            }
+            path = Some(&args[i + 1]);
+            i += 2;
+        } else {
+            rest.push(args[i].clone());
+            i += 1;
+        }
+    }
+    let path=path.ok_or("encrypted configuration requires --key-file PATH; create a new instance key with config keygen")?;
+    Ok((rest, DataKey::read_file(Path::new(path))?))
 }
 
 fn validate_index(settings: &Settings) -> CliResult<()> {

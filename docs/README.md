@@ -17,3 +17,5 @@
 
 - [Persistent configuration](configuration.md): transactional settings, CLI workflow, resource limits and recovery.
 - [Configuration performance](configuration-performance.md): binary size, constrained DNS comparison and k6 regression.
+
+- [Security model](security-model.md): data keys, code signing, installation identities and protection limits.

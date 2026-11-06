@@ -108,9 +108,11 @@ List compilation must account for the old index, staged input, new index, sortin
 
 ### SQLite is the primary store
 
-The implemented [configuration store](configuration.md) uses DELETE rollback
+The implemented [configuration store](configuration.md) uses encrypted SQLCipher
+with explicit data keys and DELETE rollback
 journaling for infrequent, bounded settings changes and closes before DNS starts.
-Its bundled SQLite build omits unused search/spatial modules and extension loading.
+Its bundled SQLCipher build omits unused search/spatial modules and extension loading;
+the OpenSSL provider is bundled and counted in the executable footprint.
 The WAL discussion below concerns future concurrent analytics storage, not a WAL
 already running in the current service.
 

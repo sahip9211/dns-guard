@@ -158,6 +158,18 @@ Do not attach arbitrary domains or every client to Prometheus metric labels. Per
 
 Desktop and browser users access the same service API and authorization rules. The desktop UI never opens the database directly. Native service installation and OS DNS changes use a narrow privileged helper; the whole UI must not run as administrator. Test native appearance, accessibility, text input, and browser usability before accepting a toolkit solely for its size.
 
+### Encryption and installation isolation
+
+- [ ] **P0** Encrypt private persisted data and database journals; use independent high-entropy keys per instance and fail closed for wrong keys or tampering.
+- [ ] **P0** Protect instance keys through OS credential custody and isolate service accounts/data directories. A second copy under the same OS user is not a security boundary by itself.
+- [ ] **P0** Define upgrade, new-instance, reinstall and recovery behavior explicitly. Keep encrypted backups separate from unlock credentials; never silently generate a replacement key for unreadable data.
+- [ ] **P0** Separate release-signing keys, data-encryption keys and API credentials. Code signing authenticates a publisher; it does not give identical signed copies different OS identities.
+
+See [security boundaries and key custody](docs/security-model.md). Protection from
+an administrator or a hostile process sharing the service's identity is not
+promised by encryption alone. The current development key-file interface must not
+be presented as a completed OS vault or an installed service-isolation boundary.
+
 ### Business operations
 
 - [ ] **P0** Groups and subnet policies, configuration export/import, versioned REST API, CLI, and recorded configuration changes.

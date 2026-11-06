@@ -1,26 +1,33 @@
 # Persistent startup configuration
 
-Configuration is stored in SQLite through rusqlite, with the SQLite library
-compiled into the executable. Repository builds omit unused FTS3/FTS5 and
+Configuration is encrypted with SQLCipher through rusqlite. SQLCipher and its
+OpenSSL crypto provider are compiled into the executable. Repository builds omit unused FTS3/FTS5 and
 R-tree modules and SQL extension loading. SQLite is compiled with `-Os`; Rust
 DNS processing retains `-O3`. Thread safety, constraints, integrity checks and
 transaction recovery remain enabled. These build options follow the
 [SQLite compile-time interface](https://sqlite.org/compile.html). No external database server, installed SQLite
 runtime, connection pool or database worker is required. The minimum supported
-Rust version is now 1.89, matching the pinned rusqlite dependency.
+Rust version is 1.89. A C compiler, Perl and Make (or platform equivalents) are
+needed to build the bundled cryptographic dependency; these are build tools, not
+runtime application dependencies.
 
 ## CLI workflow
 
 Compile or fetch/compile an index first, then run:
 
 ```sh
-dns-guard config init settings.sqlite rules.dngi --upstream 192.0.2.53:53
-dns-guard config show settings.sqlite
-dns-guard config set settings.sqlite --revision 1 --cache-bytes 65536
-dns-guard serve --config settings.sqlite
+dns-guard config keygen instance.key
+dns-guard config init settings.sqlite rules.dngi --key-file instance.key --upstream 192.0.2.53:53
+dns-guard config show settings.sqlite --key-file instance.key
+dns-guard config set settings.sqlite --key-file instance.key --revision 1 --cache-bytes 65536
+dns-guard serve --config settings.sqlite --key-file instance.key
 ```
 
-Replace the documentation upstream address with a reachable resolver. The
+Replace the documentation upstream address with a reachable resolver. `instance.key`
+is a development credential file: keep it in a trusted private location, separate
+from database backups, and do not commit it. Use a distinct generated key for each
+new instance. This interface is not an OS credential vault and does not isolate
+hostile copies running as the same user. See [security boundaries](security-model.md). The
 default listener and ACL permit loopback clients only. `init` accepts the same
 DNS options as `serve`, requires an explicit upstream and refuses to replace
 an existing file. Index paths are validated and stored as absolute paths, so a
@@ -35,13 +42,14 @@ but does not remove the index or downloaded data.
 
 Changes take effect on restart. `serve --config` rejects command-line overrides
 to avoid ambiguity. The direct `serve INDEX --upstream ...` mode remains usable.
-No network management endpoint, credentials or live configuration activation is
-introduced by this milestone.
+No network management endpoint or live configuration activation is introduced
+by this milestone. The data key is not an API credential or a code-signing key.
 
 ## DNS path and resource budgets
 
 Configuration is loaded and validated synchronously before the Tokio runtime is
-created. The connection is dropped before listeners start. The service holds only
+created. The connection and Rust-owned unlock key are dropped before listeners start.
+SQLCipher memory wiping is enabled. Typed settings remain decrypted in memory. The service holds only
 its typed settings and immutable index; no DNS request performs SQL, waits for a
 database mutex or enqueues database work. An integration test holds an exclusive
 database transaction while the configured service answers a real UDP query.
@@ -88,6 +96,23 @@ SQLite automatically recovers an interrupted transaction from its hot rollback
 journal. A subprocess test flushes uncommitted changes and exits without running
 destructors; reopening restores both the old settings and complete ACL. This is
 process-interruption coverage, not a simulated hardware power-loss qualification.
+
+Wrong keys, modified encrypted pages and other corruption fail closed; there is
+no automatic plaintext retry or key regeneration. Encryption authenticates page
+contents but does not prevent deletion or replay by a filesystem writer.
+
+Older plaintext settings require explicit migration:
+
+```sh
+dns-guard config keygen new-instance.key
+dns-guard config encrypt old.sqlite encrypted.sqlite --key-file new-instance.key
+```
+
+The source opens read-only; only recognized v1 configuration is accepted. The
+new encrypted copy starts at revision 1 and must not already exist. The original
+remains plaintext: successful migration does not erase it, previous backups or
+filesystem history. Reserve an additional source-database allowance during this
+copy. Ordinary `config` and `serve --config` commands require an encrypted file.
 
 Other corruption is preserved for inspection. Stop configuration writers, retain
 the database and any journal together, and restore a known compatible backup or

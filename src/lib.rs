@@ -8,6 +8,7 @@ pub mod config;
 mod domain;
 mod feeds;
 mod index;
+pub mod keys;
 pub mod server;
 mod storage;
 

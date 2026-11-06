@@ -16,7 +16,7 @@ RAM is a separate constrained resource, measured through process and system memo
 
 No complete application currently meets this limit. The strict cap is a feasibility objective, not an achieved property.
 
-The latest Linux executable with transactional startup configuration is
+The last measured plaintext-configuration Linux executable was
 1,853,656 bytes. Removing unused SQLite search/spatial modules and extension
 loading, and compiling SQLite for size while retaining Rust DNS optimization,
 reduced it from 3,252,408 bytes. The previous DNS/cache-only binary was 1,032,472
@@ -26,8 +26,9 @@ The current 87,812-policy test index is 1,018,122 bytes. The configuration datab
 uses 12,288 bytes in this fixture; reserve 200 KiB for its database/journal update
 budget. Executable + index + that reservation total 3,076,578 bytes, excluding
 notices, UI, analytics, retained feeds, other state and index update overlap.
-The complete-product target is still unproven. See
-[configuration limits](configuration.md).
+These figures predate SQLCipher encryption; the encrypted build needs fresh
+measurements including its crypto provider. The complete-product target is still
+unproven. See [configuration limits](configuration.md).
 
 The update publisher gates `other bytes + old index + staged index` against the
 strict ceiling using a caller-supplied inventory. See the

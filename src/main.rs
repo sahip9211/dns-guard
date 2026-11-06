@@ -10,10 +10,12 @@ const HELP: &str = "dns-guard — compact DNS filtering prototype
   dns-guard check INDEX CATEGORIES DOMAIN [DOMAIN ...]
   dns-guard inspect INDEX
   dns-guard serve INDEX --upstream IP:PORT [OPTIONS]
-  dns-guard serve --config DATABASE
-  dns-guard config init DATABASE INDEX --upstream IP:PORT [OPTIONS]
-  dns-guard config show DATABASE
-  dns-guard config set DATABASE --revision N [--index INDEX] [OPTIONS]
+  dns-guard serve --config DATABASE --key-file KEY_FILE
+  dns-guard config keygen KEY_FILE
+  dns-guard config encrypt OLD_DATABASE NEW_DATABASE --key-file KEY_FILE
+  dns-guard config init DATABASE INDEX --key-file KEY_FILE --upstream IP:PORT [OPTIONS]
+  dns-guard config show DATABASE --key-file KEY_FILE
+  dns-guard config set DATABASE --key-file KEY_FILE --revision N [--index INDEX] [OPTIONS]
 
 Serve options:
   --listen IP:PORT          UDP and TCP listener (default 127.0.0.1:5353)
@@ -96,12 +98,13 @@ fn run() -> CliResult<()> {
 fn serve_command(args: &[String]) -> CliResult<()> {
     use dns_guard::server::{Server, ServerConfig};
     let (input, config) = if args.first().is_some_and(|arg| arg == "--config") {
+        let (args, key) = config_cli::with_key(args)?;
         if args.len() != 2 {
             return Err(
                 "serve --config requires exactly one database path and no overrides".into(),
             );
         }
-        let saved = dns_guard::config::ConfigStore::open(Path::new(&args[1]))?.load()?;
+        let saved = dns_guard::config::ConfigStore::open(Path::new(&args[1]), &key)?.load()?;
         eprintln!("Using configuration revision {}", saved.revision);
         (saved.settings.index_path, saved.settings.dns)
     } else {

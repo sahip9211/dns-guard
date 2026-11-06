@@ -4,8 +4,9 @@ Status: prototype in active development. `[x]` means implemented and verified fo
 the stated scope; `[ ]` means unfinished, including partially implemented work.
 The full application is not release-ready. Update this checklist with each milestone.
 
-Latest implementation: bounded transactional startup configuration with no SQL on
-the DNS path. Next implementation milestone: authenticated API and the first dashboard.
+Latest implementation: encrypted configuration with explicit instance keys.
+OS credential custody, installed instance isolation, authenticated API and the
+first dashboard remain unfinished.
 Requirements and design rationale: [goal.md](goal.md). Measurements and limitations:
 [implementation status](docs/implementation-status.md).
 
@@ -96,6 +97,17 @@ No completed component substitutes for the whole-product size/performance gates.
 - [ ] CONFIG-08 — Expose health/readiness, version, resource budgets and policy-generation diagnostics.
 - [ ] CONFIG-09 — Add admin/operator/read-only roles, scoped API tokens and MFA (P1).
 - [ ] CONFIG-10 — Add OIDC/directory integration and multi-node configuration synchronization without shared SQLite files (P1).
+
+## Encryption and instance isolation
+
+- [x] SEC-01 — Encrypt configuration and journals with authenticated database encryption; test wrong keys, corruption and interruption without plaintext fallback.
+- [ ] SEC-02 — Protect private policy indexes, query history, exports, backups and temporary artifacts; identify and eliminate remaining plaintext copies.
+- [ ] SEC-03 — Give each instance an independent OS-generated data key; never share keys across installations or derive them from a public instance identifier.
+- [ ] SEC-04 — Provision separate service identities and private data directories; qualify ownership, ACLs and confinement on Linux, Windows and macOS.
+- [ ] SEC-05 — Integrate OS credential custody for unattended services and desktop unlock; document same-user and administrator limitations without claiming code signing creates instance isolation.
+- [ ] SEC-06 — Add safe key rotation, recovery/export, intentional migration and reinstallation/restore workflows; never reset an unreadable instance automatically.
+- [ ] SEC-07 — Keep data-encryption, API-authentication and release-signing keys separate; retain release private keys outside shipped binaries and repositories.
+- [ ] SEC-08 — Test cross-instance access under actual OS identities, malicious replacement, replay/rollback limits, memory/crash dump exposure and encrypted-size/resource budgets.
 
 ## Clients, profiles and parental controls
 

@@ -36,12 +36,14 @@ impl Fixture {
         )
         .unwrap();
         fs::write(root.join("rules.dngi"), index.as_bytes()).unwrap();
+        dns_guard::keys::DataKey::create_file(&root.join("instance.key")).unwrap();
         Self { root }
     }
     fn run(&self, args: &[&str]) -> Output {
         Command::new(env!("CARGO_BIN_EXE_dns-guard"))
             .current_dir(&self.root)
             .args(args)
+            .args(["--key-file", "instance.key"])
             .output()
             .unwrap()
     }
@@ -77,6 +79,39 @@ impl Drop for Running {
 }
 
 #[test]
+fn keygen_is_explicit_does_not_overwrite_and_configuration_has_no_keyless_fallback() {
+    let f = Fixture::new();
+    let path = f.root.join("new.key");
+    let output = Command::new(env!("CARGO_BIN_EXE_dns-guard"))
+        .args(["config", "keygen"])
+        .arg(&path)
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert_eq!(fs::metadata(&path).unwrap().len(), 32);
+    let before = fs::read(&path).unwrap();
+    assert_eq!(
+        String::from_utf8(output.stdout).unwrap(),
+        "created private instance key; keep it separate from database backups\n"
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_dns-guard"))
+        .args(["config", "keygen"])
+        .arg(&path)
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert_eq!(fs::read(&path).unwrap(), before);
+    f.init();
+    let output = Command::new(env!("CARGO_BIN_EXE_dns-guard"))
+        .args(["config", "show"])
+        .arg(f.root.join("settings.sqlite"))
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(String::from_utf8_lossy(&output.stderr).contains("requires --key-file"));
+}
+
+#[test]
 fn config_cli_validates_persists_and_requires_revision_for_edits() {
     let f = Fixture::new();
     f.init();
@@ -101,7 +136,11 @@ fn config_cli_validates_persists_and_requires_revision_for_edits() {
         "{}",
         String::from_utf8_lossy(&out.stderr)
     );
-    let db = ConfigStore::open(&f.root.join("settings.sqlite")).unwrap();
+    let db = ConfigStore::open(
+        &f.root.join("settings.sqlite"),
+        &dns_guard::keys::DataKey::read_file(&f.root.join("instance.key")).unwrap(),
+    )
+    .unwrap();
     let saved = db.load().unwrap();
     assert_eq!(saved.revision, 2);
     assert_eq!(saved.settings.dns.cache_bytes, 0);
@@ -171,6 +210,8 @@ fn service_uses_saved_configuration_from_another_directory_and_releases_database
         Command::new(env!("CARGO_BIN_EXE_dns-guard"))
             .args(["serve", "--config"])
             .arg(f.root.join("settings.sqlite"))
+            .arg("--key-file")
+            .arg(f.root.join("instance.key"))
             .current_dir(std::env::temp_dir())
             .stderr(Stdio::piped())
             .stdout(Stdio::null())
@@ -206,6 +247,11 @@ fn service_uses_saved_configuration_from_another_directory_and_releases_database
     reader.join().unwrap();
     // Exclusive access remains possible while DNS is running; no hidden DB reader.
     let connection = rusqlite::Connection::open(f.root.join("settings.sqlite")).unwrap();
+    let secret = fs::read(f.root.join("instance.key")).unwrap();
+    let hex: String = secret.iter().map(|byte| format!("{byte:02x}")).collect();
+    connection
+        .pragma_update(None, "key", format!("x'{hex}'"))
+        .unwrap();
     connection.execute_batch("BEGIN EXCLUSIVE").unwrap();
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
     socket

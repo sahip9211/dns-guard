@@ -1,6 +1,7 @@
 # Configuration milestone: resource and performance checks
 
-Measured on 2026-11-06. The implementation adds durable startup settings, not a
+Historical plaintext-configuration checkpoint, measured on 2026-11-06. It predates
+SQLCipher encryption and does not describe the encrypted build. The implementation adds durable startup settings, not a
 new DNS lookup algorithm. [Configuration behavior and limits](configuration.md)
 and the [remaining checklist](../task.md) define the scope.
 

@@ -1,5 +1,6 @@
 use dns_guard::{
     config::{ConfigStore, MAX_DATABASE_BYTES, Settings},
+    keys::DataKey,
     server::ServerConfig,
 };
 use std::{
@@ -50,7 +51,7 @@ fn configuration_roundtrips_defaults_and_all_limits_across_reopen() {
         "10.10.0.0/16".parse().unwrap(),
         "2001:db8::/32".parse().unwrap(),
     ];
-    let mut db = ConfigStore::create(&dir.db(), &settings).unwrap();
+    let mut db = ConfigStore::create(&dir.db(), &settings, &test_key()).unwrap();
     let saved = db.load().unwrap();
     assert_eq!(saved.revision, 1);
     assert_eq!(saved.settings, settings);
@@ -61,7 +62,10 @@ fn configuration_roundtrips_defaults_and_all_limits_across_reopen() {
     settings.dns.timeout = std::time::Duration::from_millis(101);
     assert_eq!(db.replace(1, &settings).unwrap(), 2);
     drop(db);
-    let saved = ConfigStore::open(&dir.db()).unwrap().load().unwrap();
+    let saved = ConfigStore::open(&dir.db(), &test_key())
+        .unwrap()
+        .load()
+        .unwrap();
     assert_eq!(saved.revision, 2);
     assert_eq!(saved.settings, settings);
 }
@@ -70,7 +74,7 @@ fn configuration_roundtrips_defaults_and_all_limits_across_reopen() {
 fn invalid_changes_and_stale_revisions_preserve_the_entire_configuration() {
     let dir = Temp::new();
     let settings = dir.settings();
-    let mut db = ConfigStore::create(&dir.db(), &settings).unwrap();
+    let mut db = ConfigStore::create(&dir.db(), &settings, &test_key()).unwrap();
     let mut invalid = settings.clone();
     invalid.dns.max_inflight = 0;
     assert!(db.replace(1, &invalid).is_err());
@@ -89,7 +93,7 @@ fn invalid_changes_and_stale_revisions_preserve_the_entire_configuration() {
 fn competing_editors_cannot_silently_overwrite_each_other() {
     let dir = Temp::new();
     let settings = dir.settings();
-    drop(ConfigStore::create(&dir.db(), &settings).unwrap());
+    drop(ConfigStore::create(&dir.db(), &settings, &test_key()).unwrap());
     let barrier = Arc::new(Barrier::new(2));
     let threads: Vec<_> = [17, 29]
         .into_iter()
@@ -98,7 +102,7 @@ fn competing_editors_cannot_silently_overwrite_each_other() {
             let mut settings = settings.clone();
             let barrier = barrier.clone();
             std::thread::spawn(move || {
-                let mut db = ConfigStore::open(&path).unwrap();
+                let mut db = ConfigStore::open(&path, &test_key()).unwrap();
                 let revision = db.load().unwrap().revision;
                 settings.dns.max_inflight = limit;
                 barrier.wait();
@@ -112,7 +116,10 @@ fn competing_editors_cannot_silently_overwrite_each_other() {
         .filter(Result::is_ok)
         .count();
     assert_eq!(successes, 1);
-    let saved = ConfigStore::open(&dir.db()).unwrap().load().unwrap();
+    let saved = ConfigStore::open(&dir.db(), &test_key())
+        .unwrap()
+        .load()
+        .unwrap();
     assert_eq!(saved.revision, 2);
     assert!([17, 29].contains(&saved.settings.dns.max_inflight));
 }
@@ -120,7 +127,7 @@ fn competing_editors_cannot_silently_overwrite_each_other() {
 #[test]
 fn missing_corrupt_foreign_and_future_databases_are_never_reset() {
     let dir = Temp::new();
-    assert!(ConfigStore::open(&dir.db()).is_err());
+    assert!(ConfigStore::open(&dir.db(), &test_key()).is_err());
     assert!(!dir.db().exists());
     for bytes in [
         vec![],
@@ -128,8 +135,8 @@ fn missing_corrupt_foreign_and_future_databases_are_never_reset() {
         vec![0; MAX_DATABASE_BYTES as usize + 1],
     ] {
         fs::write(dir.db(), &bytes).unwrap();
-        assert!(ConfigStore::open(&dir.db()).is_err());
-        assert!(ConfigStore::create(&dir.db(), &dir.settings()).is_err());
+        assert!(ConfigStore::open(&dir.db(), &test_key()).is_err());
+        assert!(ConfigStore::create(&dir.db(), &dir.settings(), &test_key()).is_err());
         assert_eq!(fs::read(dir.db()).unwrap(), bytes);
     }
     fs::remove_file(dir.db()).unwrap();
@@ -138,15 +145,15 @@ fn missing_corrupt_foreign_and_future_databases_are_never_reset() {
         .unwrap();
     drop(conn);
     let before = fs::read(dir.db()).unwrap();
-    assert!(ConfigStore::open(&dir.db()).is_err());
+    assert!(ConfigStore::open(&dir.db(), &test_key()).is_err());
     assert_eq!(fs::read(dir.db()).unwrap(), before);
     fs::remove_file(dir.db()).unwrap();
-    drop(ConfigStore::create(&dir.db(), &dir.settings()).unwrap());
-    let conn = rusqlite::Connection::open(dir.db()).unwrap();
+    drop(ConfigStore::create(&dir.db(), &dir.settings(), &test_key()).unwrap());
+    let conn = keyed_connection(&dir.db());
     conn.execute_batch("PRAGMA user_version=999;").unwrap();
     drop(conn);
     let before = fs::read(dir.db()).unwrap();
-    assert!(ConfigStore::open(&dir.db()).is_err());
+    assert!(ConfigStore::open(&dir.db(), &test_key()).is_err());
     assert_eq!(fs::read(dir.db()).unwrap(), before);
 }
 
@@ -154,7 +161,7 @@ fn missing_corrupt_foreign_and_future_databases_are_never_reset() {
 fn repeated_edits_remain_small_and_do_not_accumulate_wal_or_history() {
     let dir = Temp::new();
     let mut settings = dir.settings();
-    let mut db = ConfigStore::create(&dir.db(), &settings).unwrap();
+    let mut db = ConfigStore::create(&dir.db(), &settings, &test_key()).unwrap();
     for revision in 1..=200 {
         settings.dns.max_inflight = revision as usize;
         db.replace(revision, &settings).unwrap();
@@ -163,7 +170,7 @@ fn repeated_edits_remain_small_and_do_not_accumulate_wal_or_history() {
     assert!(fs::metadata(dir.db()).unwrap().len() <= MAX_DATABASE_BYTES);
     assert_eq!(fs::read_dir(&dir.0).unwrap().count(), 1);
     drop(db);
-    let conn = rusqlite::Connection::open(dir.db()).unwrap();
+    let conn = keyed_connection(&dir.db());
     assert_eq!(
         conn.query_row("PRAGMA journal_mode", [], |r| r.get::<_, String>(0))
             .unwrap(),
@@ -179,13 +186,13 @@ fn repeated_edits_remain_small_and_do_not_accumulate_wal_or_history() {
 #[test]
 fn damaged_stored_values_are_rejected_before_service_start() {
     let dir = Temp::new();
-    drop(ConfigStore::create(&dir.db(), &dir.settings()).unwrap());
-    let conn = rusqlite::Connection::open(dir.db()).unwrap();
+    drop(ConfigStore::create(&dir.db(), &dir.settings(), &test_key()).unwrap());
+    let conn = keyed_connection(&dir.db());
     conn.execute_batch("PRAGMA ignore_check_constraints=ON; UPDATE settings SET max_inflight=0;")
         .unwrap();
     drop(conn);
     assert!(
-        ConfigStore::open(&dir.db())
+        ConfigStore::open(&dir.db(), &test_key())
             .and_then(|db| db.load())
             .is_err()
     );
@@ -195,7 +202,7 @@ fn damaged_stored_values_are_rejected_before_service_start() {
 fn recovery_discards_a_flushed_but_uncommitted_change_after_process_exit() {
     let dir = Temp::new();
     let settings = dir.settings();
-    drop(ConfigStore::create(&dir.db(), &settings).unwrap());
+    drop(ConfigStore::create(&dir.db(), &settings, &test_key()).unwrap());
     let child = std::process::Command::new(std::env::current_exe().unwrap())
         .args(["--exact", "interrupted_writer_child", "--nocapture"])
         .env("DNS_GUARD_TEST_CRASH_DATABASE", dir.db())
@@ -208,7 +215,16 @@ fn recovery_discards_a_flushed_but_uncommitted_change_after_process_exit() {
         String::from_utf8_lossy(&child.stderr)
     );
     assert!(dir.0.join("settings.sqlite-journal").exists());
-    let saved = ConfigStore::open(&dir.db()).unwrap().load().unwrap();
+    let journal = fs::read(dir.0.join("settings.sqlite-journal")).unwrap();
+    assert!(
+        !journal
+            .windows(b"rules.dngi".len())
+            .any(|w| w == b"rules.dngi")
+    );
+    let saved = ConfigStore::open(&dir.db(), &test_key())
+        .unwrap()
+        .load()
+        .unwrap();
     assert_eq!(saved.revision, 1);
     assert_eq!(saved.settings, settings);
     assert!(!dir.0.join("settings.sqlite-journal").exists());
@@ -219,7 +235,7 @@ fn interrupted_writer_child() {
     let Some(path) = std::env::var_os("DNS_GUARD_TEST_CRASH_DATABASE") else {
         return;
     };
-    let conn = rusqlite::Connection::open(path).unwrap();
+    let conn = keyed_connection(std::path::Path::new(&path));
     conn.execute_batch("PRAGMA synchronous=EXTRA; BEGIN IMMEDIATE; UPDATE settings SET revision=2,max_inflight=123; DELETE FROM allowed_clients;").unwrap();
     conn.cache_flush().unwrap();
     // No Rust destructors/SQLite rollback: leave a real hot journal on disk.
@@ -231,14 +247,14 @@ fn interrupted_writer_child() {
 fn creation_is_private_and_symlinks_are_rejected() {
     use std::os::unix::fs::{PermissionsExt, symlink};
     let dir = Temp::new();
-    drop(ConfigStore::create(&dir.db(), &dir.settings()).unwrap());
+    drop(ConfigStore::create(&dir.db(), &dir.settings(), &test_key()).unwrap());
     assert_eq!(
         fs::metadata(dir.db()).unwrap().permissions().mode() & 0o777,
         0o600
     );
     let link = dir.0.join("link.sqlite");
     symlink(dir.db(), &link).unwrap();
-    assert!(ConfigStore::open(&link).is_err());
+    assert!(ConfigStore::open(&link, &test_key()).is_err());
 }
 
 #[cfg(unix)]
@@ -251,12 +267,27 @@ fn system_directory_aliases_work_without_following_a_database_symlink() {
     let alias = dir.0.join("alias");
     symlink(&actual, &alias).unwrap();
     let path = alias.join("settings.sqlite");
-    drop(ConfigStore::create(&path, &dir.settings()).unwrap());
+    drop(ConfigStore::create(&path, &dir.settings(), &test_key()).unwrap());
     assert_eq!(
-        ConfigStore::open(&path).unwrap().load().unwrap().revision,
+        ConfigStore::open(&path, &test_key())
+            .unwrap()
+            .load()
+            .unwrap()
+            .revision,
         1
     );
     let link = alias.join("redirect.sqlite");
     symlink(actual.join("settings.sqlite"), &link).unwrap();
-    assert!(ConfigStore::open(&link).is_err());
+    assert!(ConfigStore::open(&link, &test_key()).is_err());
+}
+
+fn test_key() -> DataKey {
+    DataKey::from_bytes([7; 32])
+}
+fn keyed_connection(path: &std::path::Path) -> rusqlite::Connection {
+    let connection = rusqlite::Connection::open(path).unwrap();
+    connection
+        .pragma_update(None, "key", format!("x'{}'", "07".repeat(32)))
+        .unwrap();
+    connection
 }

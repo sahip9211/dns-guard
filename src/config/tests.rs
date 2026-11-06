@@ -9,7 +9,8 @@ fn database_full_rolls_back_partial_work_without_losing_previous_settings() {
         index_path: directory.join("rules.dngi"),
         dns: ServerConfig::default(),
     };
-    let mut store = ConfigStore::create(&path, &settings).unwrap();
+    let key = DataKey::generate().unwrap();
+    let mut store = ConfigStore::create(&path, &settings, &key).unwrap();
     let tx = store.connection.transaction().unwrap();
     tx.execute_batch("UPDATE settings SET revision=2; DELETE FROM allowed_clients; CREATE TABLE overflow(value BLOB);").unwrap();
     let error = (0..32)
@@ -31,7 +32,7 @@ fn database_full_rolls_back_partial_work_without_losing_previous_settings() {
     );
     assert!(fs::metadata(&path).unwrap().len() <= MAX_DATABASE_BYTES);
     drop(store);
-    ConfigStore::open(&path).unwrap();
+    ConfigStore::open(&path, &key).unwrap();
     fs::remove_dir_all(directory).unwrap();
 }
 

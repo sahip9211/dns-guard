@@ -1,5 +1,5 @@
 //! Small transactional startup configuration. No connection is used by DNS queries.
-use crate::{Error, Result, server::ServerConfig};
+use crate::{Error, Result, keys::DataKey, server::ServerConfig};
 use rusqlite::{
     Connection, OpenFlags, TransactionBehavior, config::DbConfig, limits::Limit, params,
 };
@@ -57,7 +57,7 @@ pub struct ConfigStore {
 impl ConfigStore {
     /// Create once. Existing files are never overwritten, including invalid/empty ones.
     /// An initialization failure leaves the file for inspection, not automatic reset.
-    pub fn create(path: &Path, settings: &Settings) -> Result<Self> {
+    pub fn create(path: &Path, settings: &Settings, key: &DataKey) -> Result<Self> {
         settings.validate()?;
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
@@ -67,7 +67,7 @@ impl ConfigStore {
             options.mode(0o600);
         }
         drop(options.open(path)?);
-        let mut connection = connect(path)?;
+        let mut connection = connect(path, key)?;
         connection.execute_batch("PRAGMA page_size=4096; PRAGMA journal_mode=DELETE;")?;
         configure_budget(&connection)?;
         let tx = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -89,14 +89,44 @@ impl ConfigStore {
 
     /// Open only a recognized database. Future versions, foreign schemas, oversize
     /// files and corrupt configuration fail closed. SQLite recovers hot journals.
-    pub fn open(path: &Path) -> Result<Self> {
+    pub fn open(path: &Path, key: &DataKey) -> Result<Self> {
         let metadata = fs::symlink_metadata(path)?;
         if !metadata.is_file() || metadata.len() == 0 || metadata.len() > MAX_DATABASE_BYTES {
             return Err(Error::new(
                 "configuration must be a regular, nonempty file within 64 KiB",
             ));
         }
-        let connection = connect(path)?;
+        let connection = connect(path, key)?;
+        Self::checked(connection)
+    }
+
+    /// Explicit, read-only import of a legacy plaintext v1 database. The source
+    /// is retained; the encrypted destination must be new and starts revision 1.
+    pub fn import_plaintext(source: &Path, destination: &Path, key: &DataKey) -> Result<Self> {
+        use std::io::Read;
+        let metadata = fs::symlink_metadata(source)?;
+        if !metadata.is_file() || metadata.len() > MAX_DATABASE_BYTES {
+            return Err(Error::new(
+                "legacy configuration must be a regular file within 64 KiB",
+            ));
+        }
+        let mut header = [0; 16];
+        std::fs::File::open(source)?.read_exact(&mut header)?;
+        if &header != b"SQLite format 3\0" {
+            return Err(Error::new("source is not a plaintext SQLite database"));
+        }
+        let connection = Connection::open_with_flags(
+            canonical_parent(source)?,
+            OpenFlags::SQLITE_OPEN_READ_ONLY
+                | OpenFlags::SQLITE_OPEN_NO_MUTEX
+                | OpenFlags::SQLITE_OPEN_NOFOLLOW,
+        )?;
+        restrict_connection(&connection)?;
+        let saved = Self::checked(connection)?.load()?;
+        Self::create(destination, &saved.settings, key)
+    }
+
+    fn checked(connection: Connection) -> Result<Self> {
         let application: i32 =
             connection.pragma_query_value(None, "application_id", |r| r.get(0))?;
         let version: i32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
@@ -106,8 +136,16 @@ impl ConfigStore {
             ));
         }
         let journal: String = connection.pragma_query_value(None, "journal_mode", |r| r.get(0))?;
-        let page_size: u64 = connection.pragma_query_value(None, "page_size", |r| r.get(0))?;
-        if journal != "delete" || page_size != PAGE_SIZE {
+        // SQLCipher returns its effective page size as text; legacy SQLite used
+        // an integer. Accept only the exact supported size in either format.
+        let page_size: rusqlite::types::Value =
+            connection.pragma_query_value(None, "page_size", |r| r.get(0))?;
+        let supported_page_size = match page_size {
+            rusqlite::types::Value::Integer(size) => size == PAGE_SIZE as i64,
+            rusqlite::types::Value::Text(size) => size == "4096",
+            _ => false,
+        };
+        if journal != "delete" || !supported_page_size {
             return Err(Error::new(
                 "unsupported configuration journal mode or page size",
             ));
@@ -165,7 +203,29 @@ impl ConfigStore {
     }
 }
 
-fn connect(path: &Path) -> Result<Connection> {
+fn connect(path: &Path, key: &DataKey) -> Result<Connection> {
+    let connection = Connection::open_with_flags(
+        canonical_parent(path)?,
+        OpenFlags::SQLITE_OPEN_READ_WRITE
+            | OpenFlags::SQLITE_OPEN_NO_MUTEX
+            | OpenFlags::SQLITE_OPEN_NOFOLLOW,
+    )?;
+    let cipher: String = connection.pragma_query_value(None, "cipher_version", |r| r.get(0))?;
+    if cipher.is_empty() {
+        return Err(Error::new("encrypted configuration requires SQLCipher"));
+    }
+    // Key before any access to database pages. Never fall back to plaintext.
+    let literal = key.sqlcipher_literal();
+    connection
+        .pragma_update(None, "key", &*literal)
+        .map_err(|_| Error::new("unable to initialize encrypted configuration key"))?;
+    drop(literal);
+    connection.pragma_update(None, "cipher_memory_security", "ON")?;
+    restrict_connection(&connection)?;
+    Ok(connection)
+}
+
+fn canonical_parent(path: &Path) -> Result<PathBuf> {
     // SQLite's NOFOLLOW rejects symlinks in every path component. Canonicalize
     // the directory (e.g. macOS /var -> /private/var), never the database itself.
     let name = path
@@ -175,13 +235,10 @@ fn connect(path: &Path) -> Result<Connection> {
         .parent()
         .filter(|p| !p.as_os_str().is_empty())
         .unwrap_or(Path::new("."));
-    let path = fs::canonicalize(parent)?.join(name);
-    let connection = Connection::open_with_flags(
-        &path,
-        OpenFlags::SQLITE_OPEN_READ_WRITE
-            | OpenFlags::SQLITE_OPEN_NO_MUTEX
-            | OpenFlags::SQLITE_OPEN_NOFOLLOW,
-    )?;
+    Ok(fs::canonicalize(parent)?.join(name))
+}
+
+fn restrict_connection(connection: &Connection) -> Result<()> {
     connection.busy_timeout(Duration::from_millis(250))?;
     connection.set_db_config(DbConfig::SQLITE_DBCONFIG_DEFENSIVE, true)?;
     connection.set_db_config(DbConfig::SQLITE_DBCONFIG_TRUSTED_SCHEMA, false)?;
@@ -203,7 +260,7 @@ fn connect(path: &Path) -> Result<Connection> {
     }
     connection.execute_batch("PRAGMA synchronous=EXTRA; PRAGMA mmap_size=0; PRAGMA temp_store=MEMORY; PRAGMA cache_spill=OFF; PRAGMA journal_size_limit=0;")?;
     connection.pragma_update(None, "cache_size", -(PAGE_CACHE_KIB as i32))?;
-    Ok(connection)
+    Ok(())
 }
 
 fn configure_budget(connection: &Connection) -> Result<()> {
