@@ -62,6 +62,10 @@ See [DNS service](dns-service.md), [packed-policy measurements](packed-policy-op
 [transport diagnostics](transport-diagnostics.md) and the
 [benchmark guide](../tests/load/README.md).
 
+The [configuration checkpoint](configuration-performance.md) adds a current
+60-second DNS regression and a passing 2,500/sec k6 HTTP run. The DNS generator
+was near one-core saturation; neither measurement satisfies the 25,000/sec full-service gate.
+
 ## Remaining work
 
 Encrypted DNS, upstream pooling/failover, cache coalescing and generation

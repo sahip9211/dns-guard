@@ -1,0 +1,169 @@
+{
+  "report": {
+    "kind": "k6-http-harness",
+    "exit_code": 0,
+    "failure": null,
+    "completed": true,
+    "summary": {
+      "workload_observed": true,
+      "issued_requests": 150001,
+      "handled_requests": 150001,
+      "handled_requests_per_s": 2499.751469241508,
+      "http_p99_ms": 2.257103,
+      "matcher_p99_ms": 0.004281,
+      "http_error_percent": 0,
+      "policy_error_percent": 0,
+      "dropped_iterations": 0,
+      "completed": true,
+      "requests_per_configured_load_second": 2500.016666666667,
+      "target_requests_per_s": 2500
+    },
+    "enforced_limits": {
+      "cpu_percent": 50,
+      "memory_mib": 8,
+      "swap_bytes": 0,
+      "unit": "dns-guard-bench-19764f259ec5489c8a9e0705ee5b89b0.service",
+      "verified_initial": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1744896,
+        "memory_peak_bytes": 2621440,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 154169,
+          "user_usec": 143104,
+          "system_usec": 11065,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 34,
+          "nr_throttled": 29,
+          "throttled_usec": 136676,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "final": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 4386816,
+        "memory_peak_bytes": 6369280,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 7959983,
+          "user_usec": 3148262,
+          "system_usec": 4811720,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6021,
+          "nr_throttled": 30,
+          "throttled_usec": 139710,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "unit_result": {
+        "MainPID": "646802",
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/dns-guard-bench-19764f259ec5489c8a9e0705ee5b89b0.service",
+        "MemoryPeak": "6369280",
+        "CPUUsageNSec": "7959983000"
+      }
+    },
+    "target_resources": {
+      "samples": 61,
+      "sampled_duration_s": 60.13109423900096,
+      "logical_cpus": 8,
+      "cpu_mean_percent_one_core": 12.95502784139826,
+      "cpu_peak_sampled_percent_one_core": 13.977852386434586,
+      "cpu_peak_window_min_s": 0.1,
+      "cpu_mean_percent_machine": 1.6193784801747826,
+      "rss_peak_sampled_bytes": 6148096,
+      "rss_mean_sampled_bytes": 6115865.180327869
+    },
+    "generator_resources": {
+      "samples": 61,
+      "sampled_duration_s": 60.130951815001026,
+      "logical_cpus": 8,
+      "cpu_mean_percent_one_core": 172.54009269501904,
+      "cpu_peak_sampled_percent_one_core": 237.43795562900172,
+      "cpu_peak_window_min_s": 0.1,
+      "cpu_mean_percent_machine": 21.56751158687738,
+      "rss_peak_sampled_bytes": 160444416,
+      "rss_mean_sampled_bytes": 135692019.40983605
+    },
+    "request_metrics": {
+      "kind": "k6-http-harness",
+      "configured_duration": "60s",
+      "configured_mode": "arrival",
+      "configured_rate": 2500,
+      "configured_devices": 2000,
+      "configured_vus": 200,
+      "http_duration_ms": {
+        "p(99)": 2.257103,
+        "max": 60.483512,
+        "avg": 0.3153959085072728,
+        "med": 0.199463,
+        "p(95)": 0.553793
+      },
+      "matcher_duration_ms": {
+        "p(95)": 0.003192,
+        "p(99)": 0.004281,
+        "max": 2.299656,
+        "avg": 0.0021230280264798013,
+        "med": 0.001885
+      },
+      "issued_requests": {
+        "count": 150001,
+        "rate": 2499.751469241508
+      },
+      "successful_requests": {
+        "count": 150001,
+        "rate": 2499.751469241508
+      },
+      "http_error_rate": {
+        "passes": 0,
+        "fails": 150011,
+        "rate": 0
+      },
+      "policy_error_rate": {
+        "rate": 0,
+        "passes": 0,
+        "fails": 150001
+      },
+      "dropped_iterations": {
+        "count": 0,
+        "rate": 0
+      }
+    },
+    "note": "HTTP adapter, not DNS. CPU 100% equals one logical core. RSS includes adapter and index. Device header is a workload label, not authenticated client enrollment."
+  },
+  "artifact_sha256": {
+    "server": "3d32caffe50836c9addd946f1f4c1093daaa26d995b3effec00b9043e815ab7e",
+    "index": "36ce8c7a5d64a7802e1113969135ed5f4a9add97999137d2080d31b15afcacf5",
+    "cases": "5dca62a5ce034d2cad86550a3f8c4dd22cecc9e8d9814404007a4dfd53b443eb",
+    "script": "d16fcc4fc5966b69778f6ff0f6341556a64f6ac6b3d393b2013a351e980f3bd3"
+  },
+  "adapter_build_commit": "7d52903839a48fc00afb7672c86a64746a1f5b72",
+  "note": "The HTTP adapter was built before the DNS-only startup portability fixes. It does not exercise DNS forwarding, caching or configuration loading. Subsequent application edits do not change the policy matcher. This 2,500/s run is not the 25,000/s acceptance gate."
+}

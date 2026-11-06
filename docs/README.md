@@ -16,3 +16,4 @@
 - [Measurement archive](benchmarks/README.md): raw results and provenance.
 
 - [Persistent configuration](configuration.md): transactional settings, CLI workflow, resource limits and recovery.
+- [Configuration performance](configuration-performance.md): binary size, constrained DNS comparison and k6 regression.

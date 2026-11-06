@@ -1,0 +1,379 @@
+{
+  "kind": "configuration-startup-dns-regression",
+  "workload": "blocked ads.example A over UDP; closed loop; no upstream used",
+  "clients": 32,
+  "duration_each_s": 60,
+  "cpu_limit_percent_one_core": 50,
+  "memory_limit_bytes": 8388608,
+  "index_bytes": 1018122,
+  "index_sha256": "36ce8c7a5d64a7802e1113969135ed5f4a9add97999137d2080d31b15afcacf5",
+  "configuration_bytes": 12288,
+  "builds": {
+    "previous": {
+      "bytes": 1032472,
+      "sha256": "30f8b091091f5a08b3e8c41b94d9eee8a2a724df3e49f5d733b3c6a71d6423fe"
+    },
+    "full_sqlite": {
+      "bytes": 3252408,
+      "sha256": "67ad2c10db9a8b651d7c153bba0533c0598339d7eea3c258e3f19ee95d6e5187"
+    },
+    "compact_sqlite": {
+      "bytes": 1853656,
+      "sha256": "459ce95965a7f5aab190014d92641b7bef8d6338e935ea776f9bf573a8395348"
+    }
+  },
+  "cases": {
+    "previous_direct": {
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1839104,
+        "memory_peak_bytes": 2359296,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 139963,
+          "user_usec": 131222,
+          "system_usec": 8740,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 30,
+          "nr_throttled": 28,
+          "throttled_usec": 129583,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "probe_exit_code": 0,
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1425408,
+        "memory_peak_bytes": 2359296,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 16863616,
+          "user_usec": 6862935,
+          "system_usec": 10000681,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6029,
+          "nr_throttled": 30,
+          "throttled_usec": 137486,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "server_log": "DNS listening on 127.0.0.1:38115 (UDP/TCP, workers=1)\nDNS stopped: StatsSnapshot { received: 348227, blocked: 348227, forwarded: 0, upstream_errors: 0, invalid: 0, overloaded: 0, denied: 0, send_errors: 0, inflight: 0, peak_inflight: 21, cache_hits: 0, cache_misses: 0, cache_entries: 0, cache_bytes: 24648, cache_evictions: 0 }\n",
+      "report": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T15:21:21.286645+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.0029404650013,
+        "attempts": 348227,
+        "correct": 348227,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 5803.498916909162,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 5.253,
+        "p95_ms_upper_bound": 9.092,
+        "p99_ms_upper_bound": 15.189,
+        "max_ms": 245.48749,
+        "latency_above_100ms": 255,
+        "resources": {
+          "server": {
+            "samples": 285,
+            "sampled_duration_s": 60.000960317000136,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 27.882887059825727,
+            "cpu_peak_sampled_percent_one_core": 34.202196152229895,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.485360882478216,
+            "rss_peak_sampled_bytes": 3997696,
+            "rss_mean_sampled_bytes": 3996776.196491228
+          },
+          "generator": {
+            "samples": 285,
+            "sampled_duration_s": 60.00091369100119,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 92.28192804721284,
+            "cpu_peak_sampled_percent_one_core": 101.18929366932561,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.535241005901606,
+            "rss_peak_sampled_bytes": 26226688,
+            "rss_mean_sampled_bytes": 26165061.16491228
+          }
+        }
+      }
+    },
+    "current_direct": {
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1859584,
+        "memory_peak_bytes": 2621440,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 122999,
+          "user_usec": 113315,
+          "system_usec": 9683,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 26,
+          "nr_throttled": 24,
+          "throttled_usec": 108707,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "probe_exit_code": 0,
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1732608,
+        "memory_peak_bytes": 2621440,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 17180593,
+          "user_usec": 6987070,
+          "system_usec": 10193523,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6027,
+          "nr_throttled": 31,
+          "throttled_usec": 125008,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "server_log": "DNS listening on 127.0.0.1:37583 (UDP/TCP, workers=1)\nDNS stopped: StatsSnapshot { received: 394151, blocked: 394151, forwarded: 0, upstream_errors: 0, invalid: 0, overloaded: 0, denied: 0, send_errors: 0, inflight: 0, peak_inflight: 32, cache_hits: 0, cache_misses: 0, cache_entries: 0, cache_bytes: 24648, cache_evictions: 0 }\n",
+      "report": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T15:22:21.949251+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.002147444,
+        "attempts": 394151,
+        "correct": 394151,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 6568.948225859101,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 4.861,
+        "p95_ms_upper_bound": 6.531,
+        "p99_ms_upper_bound": 7.783,
+        "max_ms": 22.583884,
+        "latency_above_100ms": 0,
+        "resources": {
+          "server": {
+            "samples": 291,
+            "sampled_duration_s": 60.00041153699931,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 28.43313831185964,
+            "cpu_peak_sampled_percent_one_core": 34.15873091820673,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.554142288982455,
+            "rss_peak_sampled_bytes": 4333568,
+            "rss_mean_sampled_bytes": 4332653.085910653
+          },
+          "generator": {
+            "samples": 291,
+            "sampled_duration_s": 60.00036252800055,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 94.5160955878141,
+            "cpu_peak_sampled_percent_one_core": 101.97672162868213,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.814511948476763,
+            "rss_peak_sampled_bytes": 26898432,
+            "rss_mean_sampled_bytes": 26870506.00687285
+          }
+        }
+      }
+    },
+    "current_saved": {
+      "cgroup_before": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1789952,
+        "memory_peak_bytes": 2359296,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 118210,
+          "user_usec": 109723,
+          "system_usec": 8486,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 26,
+          "nr_throttled": 22,
+          "throttled_usec": 103433,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "probe_exit_code": 0,
+      "cgroup_after": {
+        "cpu_quota_us": 5000,
+        "cpu_period_us": 10000,
+        "memory_max_bytes": 8388608,
+        "swap_max_bytes": 0,
+        "memory_current_bytes": 1511424,
+        "memory_peak_bytes": 2359296,
+        "memory_events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0,
+          "sock_throttled": 0
+        },
+        "cpu_stat": {
+          "usage_usec": 17192903,
+          "user_usec": 7072823,
+          "system_usec": 10120080,
+          "nice_usec": 0,
+          "core_sched.force_idle_usec": 0,
+          "nr_periods": 6027,
+          "nr_throttled": 26,
+          "throttled_usec": 104978,
+          "nr_bursts": 0,
+          "burst_usec": 0
+        }
+      },
+      "server_log": "Using configuration revision 1\nDNS listening on 127.0.0.1:44723 (UDP/TCP, workers=1)\nDNS stopped: StatsSnapshot { received: 338212, blocked: 338212, forwarded: 0, upstream_errors: 0, invalid: 0, overloaded: 0, denied: 0, send_errors: 0, inflight: 0, peak_inflight: 8, cache_hits: 0, cache_misses: 0, cache_entries: 0, cache_bytes: 24648, cache_evictions: 0 }\n",
+      "report": {
+        "kind": "closed-loop-blocked-udp-diagnostic-not-k6",
+        "created_at": "2026-11-06T15:23:22.549552+00:00",
+        "clients": 32,
+        "configured_duration_s": 60,
+        "elapsed_with_drain_s": 60.003234307998355,
+        "attempts": 338212,
+        "correct": 338212,
+        "errors": 0,
+        "timeouts": 0,
+        "error_rate": 0.0,
+        "correct_per_elapsed_second": 5636.562826996091,
+        "offered_arrival_capacity": "not measured by a closed-loop diagnostic",
+        "latency_scope": "valid replies only, send through receive and validation",
+        "p50_ms_upper_bound": 5.284,
+        "p95_ms_upper_bound": 8.898,
+        "p99_ms_upper_bound": 16.011,
+        "max_ms": 336.383914,
+        "latency_above_100ms": 231,
+        "resources": {
+          "server": {
+            "samples": 286,
+            "sampled_duration_s": 60.00081169400073,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 28.482948009366293,
+            "cpu_peak_sampled_percent_one_core": 34.083767656332306,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 3.5603685011707866,
+            "rss_peak_sampled_bytes": 4861952,
+            "rss_mean_sampled_bytes": 4861465.062937063
+          },
+          "generator": {
+            "samples": 286,
+            "sampled_duration_s": 60.00071302699871,
+            "logical_cpus": 8,
+            "cpu_mean_percent_one_core": 92.36556901425902,
+            "cpu_peak_sampled_percent_one_core": 101.66342814630195,
+            "cpu_peak_window_min_s": 0.1,
+            "cpu_mean_percent_machine": 11.545696126782378,
+            "rss_peak_sampled_bytes": 26316800,
+            "rss_mean_sampled_bytes": 26316341.706293706
+          }
+        }
+      }
+    }
+  },
+  "source_files_sha256": {
+    "Cargo.lock": "690fbe51f9d518d79639f4bce924a758fd0deecbd2944f4501c03d9498fb115c",
+    "Cargo.toml": "3ade9e642c3065e1804d0c429ce8a3f5ec671d44028794b585b88ef41f64c4ca",
+    ".cargo/config.toml": "10657979b35c94e338fb2e8e86f459b18454d521b0f2ca1f07b1a48447ebcdbb",
+    "src/cache/tests.rs": "0053116baa0580e326be88c48154e7f778d17d3c3b49a124c12a4164b0ede76f",
+    "src/cache.rs": "887308a464cdcef629c7581a131949e214608c0acfd88387c19078aba1dae5df",
+    "src/config/tests.rs": "9a362994278237e310f71fe03447680e58f2f678b425d03596cbfa646a9d063d",
+    "src/config.rs": "57b69afe03db09ceae70645478bbfaad1f198158a0951b321f470a9e400bf6bc",
+    "src/config_cli.rs": "f871f82a0e7b069ca621e50001c3b3486a6e03e9f28f11d852f52ce8fd0063bd",
+    "src/domain.rs": "4e369609db647a093dca854aa59214cc35a8ade5234f556e2720ed788ac07adb",
+    "src/feeds.rs": "22f53545b5f4cac7f5c8c7941fe398922586f24d6dede6f76e84b0aaef2bf956",
+    "src/index.rs": "87d04da0fb52a68dffd84a1aa85568ac4b7a134367822c3d1ffabe7344295e4d",
+    "src/lib.rs": "60aa0ecb464c5f923c87f8a5f27781727772536a7dff496a442e27def621cfd0",
+    "src/main.rs": "7558dda509a3aab94b4ddf776e0abfb5710b9577d792eb89be8e3fd89f94b28f",
+    "src/server.rs": "9f4f84efa1e9185c04c2e6a01c2ca5c320c996164c773636b20a5fd538be8a2a",
+    "src/storage.rs": "c4d9dae2699cf349ef89d990f6ea6b6a6f651080a1d7bb9c812a278c7727ef0c",
+    "src/config/schema.sql": "8e30ef8cd2cfbd8e25092136879feb5b6cd893a6d1a7154cb6bf269ed4e29955"
+  },
+  "implementation_commit": "3e297bf1d7d1b811c915a08e12f1067c8261cf6d",
+  "hardware": {
+    "architecture": "x86_64",
+    "kernel": "7.2.8-9-omarchy",
+    "logical_cpus": 8,
+    "cpu_model": "Intel(R) Core(TM) i7-10510U CPU @ 1.80GHz"
+  },
+  "summary_method": "CPU peak summaries recomputed from original samples with a 100 ms minimum window. Whole-run CPU means and RSS are unchanged. Raw samples remain in ignored local results.",
+  "resource_summary_sha256": "87afff24fe301ce4b69801e8e0398e7b56a82a79799ad1bee50a897dc61ae2e6",
+  "limitations": [
+    "Single shared desktop, sequential 60-second runs; scheduling contention is uncontrolled.",
+    "Closed-loop Python generator used over 90% of a logical core; offered-arrival capacity and 25k/s acceptance not established.",
+    "Synthetic blocked-name UDP workload only; no upstream, cache-hit, TLS, UI or analytics workload.",
+    "Final implementation adds startup storage and port/path fixes; it does not optimize the DNS query algorithm.",
+    "Short historical first-pass runs remain local; only this final binary comparison is published here."
+  ]
+}

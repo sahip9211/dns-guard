@@ -1,6 +1,6 @@
 # Runtime third-party notices
 
-Direct runtime dependencies are fst 0.4.7, Hickory Proto 0.26.3, Tokio 1.48.0
+Direct runtime dependencies are fst 0.4.7, Hickory Proto 0.26.3, Tokio 1.48.0,
 ipnet 2.11.0 and rusqlite 0.41.1 (bundled SQLite 3.54.1 through
 libsqlite3-sys 0.39.1). Their MIT notices are reproduced below. Cargo.lock pins the
 complete dependency graph; dependency package metadata contains transitive
